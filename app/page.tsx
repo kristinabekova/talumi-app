@@ -120,6 +120,11 @@ function GamesScreen({
               <strong>Neónové bubliny</strong>
               <span>Priraď správny výsledok</span>
             </span>
+            <img
+              src="/talumi-neon-bubbles-card-bg.png"
+              alt="Neónové bubliny"
+              className="card-art"
+            />
           </button>
         </div>
       </section>
