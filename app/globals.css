@@ -94,3 +94,9 @@ button:focus-visible{outline:3px solid var(--turquoise);outline-offset:3px}
 .snake-head{background:linear-gradient(145deg,#72f6f1 0%,#18dce2 48%,#089ab8 100%)}
 .number-orb{background:radial-gradient(circle at 34% 27%,#fff 0 7%,var(--orb-color) 29%,color-mix(in srgb,var(--orb-color),#39249b 34%) 100%);border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.55),0 0 18px color-mix(in srgb,var(--orb-color),transparent 40%)}
 .number-orb span{text-shadow:0 2px 4px rgba(47,26,113,.38)}
+.game-card.bubbles-card {
+  background-image: url('/talumi-neon-bubbles-card-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
