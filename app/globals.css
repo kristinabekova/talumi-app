@@ -96,7 +96,22 @@ button:focus-visible{outline:3px solid var(--turquoise);outline-offset:3px}
 .number-orb span{text-shadow:0 2px 4px rgba(47,26,113,.38)}
 .game-card.bubbles-card {
   background-image: url('/talumi-neon-bubbles-card-bg.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+.game-card.bubbles-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.game-card.bubbles-card .card-art {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.game-card.bubbles-card .game-card-copy {
+  position: relative;
+  z-index: 1;
 }
