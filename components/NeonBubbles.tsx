@@ -23,7 +23,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
   const [level, setLevel] = useState(1);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [bubbles, setBubbles] = useState<BubbleItem[]>([]);
-  const [matched, setMatched] = useState<{ [key: number]: number }>({}); // questionId -> answer
+  const [matched, setMatched] = useState<{ [key: number]: number }>({});
   const [wrongQuestionId, setWrongQuestionId] = useState<number | null>(null);
   const [isLevelCompleted, setIsLevelCompleted] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -51,8 +51,8 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         osc1.type = "sine";
         osc2.type = "triangle";
 
-        osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-        osc1.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.12); // E5
+        osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.12);
 
         osc2.frequency.setValueAtTime(1046.5, ctx.currentTime);
         osc2.frequency.exponentialRampToValueAtTime(1318.5, ctx.currentTime + 0.12);
@@ -86,11 +86,11 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         osc.stop(ctx.currentTime + 0.2);
       }
     } catch {
-      // Ignorovanie ak prehliadač blokuje audio
+      // Audio kontekt je ignorovaný ak prehliadač blokuje autoplay
     }
   };
 
-  // Generovanie príkladov na sčítanie a odčítanie do 20 (s prechodom aj bez prechodu cez 10)
+  // Generovanie príkladov + garantované zamiešanie poradí bublín
   const generateLevel = () => {
     const newQuestions: Question[] = [];
     const usedAnswers = new Set<number>();
@@ -101,21 +101,18 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
       let ans = 0;
 
       if (isAddition) {
-        // Sčítanie do 20 (napr. 7+5, 12+4, 8+9)
-        const num1 = Math.floor(Math.random() * 15) + 1; // 1 až 15
+        const num1 = Math.floor(Math.random() * 15) + 1;
         const maxNum2 = 20 - num1;
-        const num2 = Math.floor(Math.random() * maxNum2) + 1; // 1 až maxNum2
+        const num2 = Math.floor(Math.random() * maxNum2) + 1;
         ans = num1 + num2;
         text = `${num1} + ${num2}`;
       } else {
-        // Odčítanie do 20 (napr. 15-7, 18-4, 11-3)
-        const num1 = Math.floor(Math.random() * 16) + 5; // 5 až 20
-        const num2 = Math.floor(Math.random() * (num1 - 1)) + 1; // 1 až num1-1
+        const num1 = Math.floor(Math.random() * 16) + 5;
+        const num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
         ans = num1 - num2;
         text = `${num1} − ${num2}`;
       }
 
-      // Každý z 3 príkladov v kole musí mať unikátny výsledok
       if (!usedAnswers.has(ans)) {
         usedAnswers.add(ans);
         newQuestions.push({
@@ -126,13 +123,26 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
       }
     }
 
-    const newBubbles: BubbleItem[] = Array.from(usedAnswers)
-      .sort(() => Math.random() - 0.5)
-      .map((val, idx) => ({
-        id: idx,
-        value: val,
-        colorClass: colorPalette[idx % colorPalette.length],
-      }));
+    // Vytvorenie zoznamu odpovedí
+    let answerValues = newQuestions.map((q) => q.answer);
+
+    // Garantované premiešanie, aby žiadna odpoveď nezostala v rovnakom riadku ako príklad
+    let shuffled = [...answerValues];
+    let isSamePosition = true;
+    let attempts = 0;
+
+    while (isSamePosition && attempts < 20) {
+      shuffled.sort(() => Math.random() - 0.5);
+      // Kontrola, či aspoň jedna položka nie je na pôvodnom indexe
+      isSamePosition = shuffled.some((val, idx) => val === newQuestions[idx].answer);
+      attempts++;
+    }
+
+    const newBubbles: BubbleItem[] = shuffled.map((val, idx) => ({
+      id: idx,
+      value: val,
+      colorClass: colorPalette[idx % colorPalette.length],
+    }));
 
     setQuestions(newQuestions);
     setBubbles(newBubbles);
@@ -172,7 +182,6 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
       const targetQuestion = questions.find((q) => q.id === hoveredQuestionId);
 
       if (targetQuestion && targetQuestion.answer === draggedBubble.value) {
-        // Správna odpoveď
         playSound("correct");
         const newMatched = { ...matched, [hoveredQuestionId]: draggedBubble.value };
         setMatched(newMatched);
@@ -181,7 +190,6 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
 
         setTimeout(() => setFeedback(null), 800);
 
-        // Všetky 3 priradené -> Mávajúci Guľko a posun levelu
         if (Object.keys(newMatched).length === 3) {
           setIsLevelCompleted(true);
           setTimeout(() => {
@@ -189,7 +197,6 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
           }, 1200);
         }
       } else {
-        // Nesprávna odpoveď -> Červené podsvietenie
         playSound("wrong");
         setWrongQuestionId(hoveredQuestionId);
         setFeedback("Skús znova!");
@@ -268,7 +275,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
             })}
           </div>
 
-          {/* PRAVÝ STĹPEC: 3 Neónové Bubliny */}
+          {/* PRAVÝ STĹPEC: Náhodne premiešané bubliny */}
           <div className="bubbles-column">
             {bubbles.map((b) => {
               const isUsed = Object.values(matched).includes(b.value);
@@ -316,7 +323,6 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         </div>
       )}
 
-      {/* CSS štýly */}
       <style jsx>{`
         .neon-bubbles-stage {
           min-height: 100vh;
