@@ -24,6 +24,8 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [bubbles, setBubbles] = useState<BubbleItem[]>([]);
   const [matched, setMatched] = useState<{ [key: number]: number }>({}); // questionId -> answer
+  const [wrongQuestionId, setWrongQuestionId] = useState<number | null>(null);
+  const [isLevelCompleted, setIsLevelCompleted] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   // Drag states
@@ -32,31 +34,98 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
   const [hoveredQuestionId, setHoveredQuestionId] = useState<number | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Farby bublín podľa vzoru z obrázka (tirkysová, fialovo-ružová, svetlomodrá)
   const colorPalette = ["bubble-cyan", "bubble-purple", "bubble-blue"];
 
-  // Generovanie 3 nových príkladov a 3 prislúchajúcich výsledkov
+  // Zvuková odozva cez Web Audio API
+  const playSound = (type: "correct" | "wrong") => {
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+
+      if (type === "correct") {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = "sine";
+        osc2.type = "triangle";
+
+        osc1.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        osc1.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.12); // E5
+
+        osc2.frequency.setValueAtTime(1046.5, ctx.currentTime);
+        osc2.frequency.exponentialRampToValueAtTime(1318.5, ctx.currentTime + 0.12);
+
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start();
+        osc2.start();
+        osc1.stop(ctx.currentTime + 0.25);
+        osc2.stop(ctx.currentTime + 0.25);
+      } else {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(160, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.18);
+
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + 0.2);
+      }
+    } catch {
+      // Ignorovanie ak prehliadač blokuje audio
+    }
+  };
+
+  // Generovanie príkladov na sčítanie a odčítanie do 20 (s prechodom aj bez prechodu cez 10)
   const generateLevel = () => {
     const newQuestions: Question[] = [];
     const usedAnswers = new Set<number>();
 
     while (newQuestions.length < 3) {
-      const num1 = Math.floor(Math.random() * 8) + 2;
-      const num2 = Math.floor(Math.random() * 8) + 2;
-      const ans = num1 * num2;
+      const isAddition = Math.random() > 0.5;
+      let text = "";
+      let ans = 0;
 
+      if (isAddition) {
+        // Sčítanie do 20 (napr. 7+5, 12+4, 8+9)
+        const num1 = Math.floor(Math.random() * 15) + 1; // 1 až 15
+        const maxNum2 = 20 - num1;
+        const num2 = Math.floor(Math.random() * maxNum2) + 1; // 1 až maxNum2
+        ans = num1 + num2;
+        text = `${num1} + ${num2}`;
+      } else {
+        // Odčítanie do 20 (napr. 15-7, 18-4, 11-3)
+        const num1 = Math.floor(Math.random() * 16) + 5; // 5 až 20
+        const num2 = Math.floor(Math.random() * (num1 - 1)) + 1; // 1 až num1-1
+        ans = num1 - num2;
+        text = `${num1} − ${num2}`;
+      }
+
+      // Každý z 3 príkladov v kole musí mať unikátny výsledok
       if (!usedAnswers.has(ans)) {
         usedAnswers.add(ans);
         newQuestions.push({
           id: Date.now() + newQuestions.length,
-          text: `${num1} × ${num2}`,
+          text: text,
           answer: ans,
         });
       }
     }
 
-    // Zamiešanie bublín pre pravú stranu
     const newBubbles: BubbleItem[] = Array.from(usedAnswers)
       .sort(() => Math.random() - 0.5)
       .map((val, idx) => ({
@@ -68,17 +137,15 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
     setQuestions(newQuestions);
     setBubbles(newBubbles);
     setMatched({});
+    setIsLevelCompleted(false);
   };
 
   useEffect(() => {
     generateLevel();
   }, [level]);
 
-  // Začiatok drag-and-drop (Touch aj Mouse)
   const handleStartDrag = (bubble: BubbleItem, clientX: number, clientY: number) => {
-    // Ak už bola táto bublina použitá, nedá sa ťahať
     if (Object.values(matched).includes(bubble.value)) return;
-
     setDraggedBubble(bubble);
     setDragPos({ x: clientX, y: clientY });
   };
@@ -87,7 +154,6 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
     if (!draggedBubble) return;
     setDragPos({ x: clientX, y: clientY });
 
-    // Detekcia, nad ktorým príkladom sa nachádzame
     const elements = document.elementsFromPoint(clientX, clientY);
     const questionEl = elements.find((el) => el.hasAttribute("data-question-id"));
 
@@ -106,25 +172,32 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
       const targetQuestion = questions.find((q) => q.id === hoveredQuestionId);
 
       if (targetQuestion && targetQuestion.answer === draggedBubble.value) {
-        // Správne priradenie!
+        // Správna odpoveď
+        playSound("correct");
         const newMatched = { ...matched, [hoveredQuestionId]: draggedBubble.value };
         setMatched(newMatched);
         setScore((prev) => prev + 10);
-        setFeedback("Super!");
+        setFeedback("Výborne!");
 
         setTimeout(() => setFeedback(null), 800);
 
-        // Ak sú vyriešené všetky 3 príklady, ide sa na nový level
+        // Všetky 3 priradené -> Mávajúci Guľko a posun levelu
         if (Object.keys(newMatched).length === 3) {
+          setIsLevelCompleted(true);
           setTimeout(() => {
             setLevel((l) => l + 1);
-            setFeedback("Level dokončený! 🎉");
-          }, 600);
+          }, 1200);
         }
       } else {
-        // Nesprávne priradenie
+        // Nesprávna odpoveď -> Červené podsvietenie
+        playSound("wrong");
+        setWrongQuestionId(hoveredQuestionId);
         setFeedback("Skús znova!");
-        setTimeout(() => setFeedback(null), 800);
+
+        setTimeout(() => {
+          setWrongQuestionId(null);
+          setFeedback(null);
+        }, 600);
       }
     }
 
@@ -145,7 +218,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
       }}
       onTouchEnd={handleEndDrag}
     >
-      {/* Horná lišta s tlačidlom SPÄŤ a skóre */}
+      {/* Horná lišta */}
       <header className="neon-top-bar">
         <button className="back-btn" onClick={onBack} aria-label="Späť na výber zón">
           ←
@@ -161,7 +234,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
       <main className="neon-game-area">
         <div className="instructions">
           <h2>Priraď správny výsledok k príkladu</h2>
-          <p>Chytni bublinu a presuň ju na príklad</p>
+          <p>Sčítavanie a odčítavanie do 20</p>
         </div>
 
         {feedback && <div className="game-toast-feedback">{feedback}</div>}
@@ -172,12 +245,15 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
             {questions.map((q) => {
               const isSolved = matched[q.id] !== undefined;
               const isHovered = hoveredQuestionId === q.id;
+              const isWrong = wrongQuestionId === q.id;
 
               return (
                 <div
                   key={q.id}
                   data-question-id={q.id}
-                  className={`question-card ${isSolved ? "solved" : ""} ${isHovered ? "drop-hover" : ""}`}
+                  className={`question-card ${isSolved ? "solved" : ""} ${isHovered ? "drop-hover" : ""} ${
+                    isWrong ? "wrong-shake" : ""
+                  }`}
                 >
                   <span className="math-expr">{q.text} =</span>
                   <div className="answer-slot">
@@ -192,7 +268,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
             })}
           </div>
 
-          {/* PRAVÝ STĹPEC: 3 Neónové Bubliny z priloženého obrázka */}
+          {/* PRAVÝ STĹPEC: 3 Neónové Bubliny */}
           <div className="bubbles-column">
             {bubbles.map((b) => {
               const isUsed = Object.values(matched).includes(b.value);
@@ -215,9 +291,18 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
             })}
           </div>
         </div>
+
+        {/* GUĽKO MASKOT */}
+        <div className={`gulko-mascot-wrapper ${isLevelCompleted ? "celebrate" : "floating"}`}>
+          <img
+            src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
+            alt="Guľko maskot"
+            className="gulko-mascot-img"
+          />
+        </div>
       </main>
 
-      {/* Dragged Bubble Ghost (Bublina pod prstom/myšou) */}
+      {/* Ghost bublina pri ťahaní */}
       {draggedBubble && (
         <div
           className={`dragged-bubble-ghost ${draggedBubble.colorClass}`}
@@ -231,7 +316,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         </div>
       )}
 
-      {/* CSS priamo zabudované pre hru */}
+      {/* CSS štýly */}
       <style jsx>{`
         .neon-bubbles-stage {
           min-height: 100vh;
@@ -252,7 +337,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
           max-width: 900px;
           margin: 0 auto;
           width: 100%;
-          padding: 8px 0 20px;
+          padding: 8px 0 16px;
         }
 
         .back-btn {
@@ -307,22 +392,23 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
           display: flex;
           flex-direction: column;
           align-items: center;
+          position: relative;
         }
 
         .instructions {
           text-align: center;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
 
         .instructions h2 {
-          font-size: 28px;
+          font-size: 26px;
           font-weight: 1000;
           color: #33005b;
-          margin: 0 0 6px;
+          margin: 0 0 4px;
         }
 
         .instructions p {
-          font-size: 15px;
+          font-size: 14px;
           color: #645675;
           margin: 0;
           font-weight: 600;
@@ -330,7 +416,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
 
         .game-toast-feedback {
           position: absolute;
-          top: 100px;
+          top: 85px;
           background: #33005b;
           color: #00e5d1;
           padding: 8px 24px;
@@ -345,25 +431,24 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         .matching-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 32px;
+          gap: 28px;
           width: 100%;
           align-items: center;
           margin-top: 10px;
         }
 
-        /* Ľavé karty s príkladmi */
         .questions-column {
           display: flex;
           flex-direction: column;
-          gap: 18px;
+          gap: 16px;
         }
 
         .question-card {
-          background: rgba(255, 255, 255, 0.85);
+          background: rgba(255, 255, 255, 0.88);
           backdrop-filter: blur(8px);
           border: 2px solid #e1d3eb;
           border-radius: 24px;
-          padding: 16px 24px;
+          padding: 14px 22px;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -382,6 +467,13 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
           background: #ffffff;
         }
 
+        .question-card.wrong-shake {
+          border-color: #ff0055 !important;
+          background: #ffe6ee !important;
+          box-shadow: 0 0 20px rgba(255, 0, 85, 0.35) !important;
+          animation: shake 0.35s ease;
+        }
+
         .math-expr {
           font-size: 28px;
           font-weight: 1000;
@@ -389,8 +481,8 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         }
 
         .answer-slot {
-          width: 60px;
-          height: 60px;
+          width: 58px;
+          height: 58px;
           border-radius: 50%;
           border: 2px dashed #bba1d0;
           display: flex;
@@ -405,8 +497,8 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         }
 
         .placed-bubble {
-          width: 58px;
-          height: 58px;
+          width: 56px;
+          height: 56px;
           border-radius: 50%;
           background: linear-gradient(135deg, #00e5d1, #00aaa3);
           color: #ffffff;
@@ -418,18 +510,16 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
           box-shadow: 0 4px 12px rgba(0, 229, 209, 0.4);
         }
 
-        /* Pravý stĺpec - Bubliny */
         .bubbles-column {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 20px;
+          gap: 18px;
         }
 
-        /* BUBBLING VISUAL STYLING PODĽA OBRÁZKA */
         .bubble-item {
-          width: 100px;
-          height: 100px;
+          width: 96px;
+          height: 96px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -445,32 +535,30 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         }
 
         .bubble-item.used {
-          opacity: 0.2;
+          opacity: 0.18;
           pointer-events: none;
         }
 
         .bubble-val {
-          font-size: 40px;
+          font-size: 38px;
           font-weight: 1000;
           color: #ffffff;
           z-index: 2;
           text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         }
 
-        /* Lesk na bubline */
         .bubble-shine {
           position: absolute;
           top: 12%;
           left: 18%;
-          width: 26px;
-          height: 14px;
+          width: 24px;
+          height: 13px;
           background: rgba(255, 255, 255, 0.65);
           border-radius: 50%;
           transform: rotate(-30deg);
           z-index: 1;
         }
 
-        /* Vzorové farebné kombinácie neónových bublín */
         .bubble-cyan {
           background: radial-gradient(circle at 35% 35%, #80fbf1 0%, #00d3c5 50%, #008f87 100%);
           box-shadow: 0 10px 25px rgba(0, 211, 197, 0.45), inset 0 -6px 12px rgba(0, 0, 0, 0.15);
@@ -489,11 +577,10 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
           border: 3px solid #cae4ff;
         }
 
-        /* Ghost bublina pri ťahaní */
         .dragged-bubble-ghost {
           position: fixed;
-          width: 90px;
-          height: 90px;
+          width: 88px;
+          height: 88px;
           border-radius: 50%;
           transform: translate(-50%, -50%);
           pointer-events: none;
@@ -501,13 +588,54 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          opacity: 0.9;
+          opacity: 0.92;
         }
 
         .dragged-bubble-ghost span {
           font-size: 36px;
           font-weight: 1000;
           color: #ffffff;
+        }
+
+        .gulko-mascot-wrapper {
+          position: absolute;
+          bottom: -10px;
+          right: 0px;
+          width: 105px;
+          height: 105px;
+          pointer-events: none;
+          z-index: 5;
+        }
+
+        .gulko-mascot-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          filter: drop-shadow(0 8px 16px rgba(51, 0, 91, 0.18));
+        }
+
+        .gulko-mascot-wrapper.floating {
+          animation: floatY 3s ease-in-out infinite;
+        }
+
+        .gulko-mascot-wrapper.celebrate {
+          animation: waveJump 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatY {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+        }
+
+        @keyframes waveJump {
+          0% { transform: translateY(0) scale(1); }
+          100% { transform: translateY(-16px) scale(1.08); }
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-8px); }
+          40%, 80% { transform: translateX(8px); }
         }
 
         @keyframes popIn {
@@ -518,18 +646,24 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         @media (max-width: 600px) {
           .matching-grid {
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 18px;
           }
           .bubbles-column {
             flex-direction: row;
             justify-content: center;
           }
           .bubble-item {
-            width: 80px;
-            height: 80px;
+            width: 78px;
+            height: 78px;
           }
           .bubble-val {
-            font-size: 32px;
+            font-size: 30px;
+          }
+          .gulko-mascot-wrapper {
+            width: 75px;
+            height: 75px;
+            bottom: -5px;
+            right: -5px;
           }
         }
       `}</style>
