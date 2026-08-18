@@ -171,8 +171,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     return grid;
   };
 
-  const initLevel = () => {
-    const currentSize = 6 + Math.floor((level - 1) / 5);
+  const startLevel = (nextLvl: number) => {
+    const currentSize = 6 + Math.floor((nextLvl - 1) / 5);
     const cappedSize = Math.min(currentSize, 8);
     setGridSize(cappedSize);
 
@@ -227,7 +227,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   };
 
   useEffect(() => {
-    initLevel();
+    startLevel(level);
   }, [level]);
 
   useEffect(() => {
@@ -312,15 +312,20 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
+    // Dosiahnutie cieľa: Guľko zostáva presne na políčku cieľa a teší sa
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLevelCompletedRef.current) {
         playSound("win");
         isLevelCompletedRef.current = true;
         setIsLevelCompleted(true);
+        // Zafixujeme cieľovú pozíciu pre oslavu priamo na minci
+        targetPosRef.current = { x: targetC, y: targetR };
+        currentPosRef.current = { x: targetC, y: targetR };
+        setGulkoPos({ x: targetC, y: targetR });
 
         setTimeout(() => {
           handleLevelFinished();
-        }, 650);
+        }, 750);
       }
     }
   };
@@ -567,20 +572,20 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO: Čistý render bez iOS glitchov */}
+          {/* GUĽKO: Čistý kruhový render bez akéhokoľvek štvorcového pozadia */}
           <div
-            className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-goal" : ""}`}
+            className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-at-goal" : ""}`}
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${gulkoPos.x * 100}%), calc(16px + ${gulkoPos.y * 100}%), 0)`,
             }}
           >
-            <div className="gulko-avatar-wrapper">
+            <div className="clean-gulko-sphere">
               <img
                 src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
                 alt="Guľko"
-                className="pure-gulko-render"
+                className="sphere-img"
               />
             </div>
           </div>
@@ -590,7 +595,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           <div className="milestone-modal-backdrop">
             <div className="milestone-modal-card">
               <div className="milestone-mascot-wrap">
-                <img src="/talumi-gulko-wave.png" alt="Guľko sa teší" className="milestone-gulko-img" />
+                <div className="clean-gulko-sphere">
+                  <img src="/talumi-gulko-wave.png" alt="Guľko sa teší" className="sphere-img" />
+                </div>
               </div>
               <h3>Paráda!</h3>
               <p>{milestoneMessage}</p>
@@ -607,13 +614,14 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           </div>
         )}
 
-        {/* Spodný Guľko maskot */}
         <div className={`gulko-bottom-mascot ${isLevelCompleted ? "wave-jump" : "float"}`}>
-          <img
-            src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
-            alt="Guľko maskot"
-            className="pure-gulko-render"
-          />
+          <div className="clean-gulko-sphere">
+            <img
+              src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
+              alt="Guľko maskot"
+              className="sphere-img"
+            />
+          </div>
         </div>
       </main>
 
@@ -795,7 +803,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: none;
         }
 
-        /* OPRAVA PRE IPHONE A SAFARI */
+        /* DOKONALÉ KRUHOVÉ GUĽKO BEZ ŠTVORCA */
         .smooth-gulko-layer {
           position: absolute;
           top: 0;
@@ -809,29 +817,33 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           will-change: transform;
         }
 
-        .gulko-avatar-wrapper {
+        .clean-gulko-sphere {
           width: 100%;
           height: 100%;
-          border-radius: 50%;
-          overflow: hidden;
+          border-radius: 50% !important;
+          -webkit-border-radius: 50% !important;
+          clip-path: circle(50% at 50% 50%) !important;
+          -webkit-clip-path: circle(50% at 50% 50%) !important;
+          background: transparent !important;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: transparent;
+          overflow: hidden !important;
+          filter: drop-shadow(0 4px 10px rgba(51, 0, 91, 0.25));
+          -webkit-filter: drop-shadow(0 4px 10px rgba(51, 0, 91, 0.25));
         }
 
-        .pure-gulko-render {
+        .sphere-img {
           width: 100%;
           height: 100%;
-          object-fit: contain;
+          object-fit: cover !important;
+          border-radius: 50% !important;
           display: block;
-          border-radius: 50%;
-          filter: drop-shadow(0 4px 8px rgba(51, 0, 91, 0.25));
-          -webkit-filter: drop-shadow(0 4px 8px rgba(51, 0, 91, 0.25));
         }
 
-        .smooth-gulko-layer.celebrating-goal {
-          animation: goalHappyJump 0.3s ease-in-out infinite alternate;
+        /* OSLAVA NA POLÍČKU CIEĽA */
+        .smooth-gulko-layer.celebrating-at-goal {
+          animation: victoryGoalBounce 0.36s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate;
         }
 
         .milestone-modal-backdrop {
@@ -865,13 +877,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           height: 90px;
           margin: 0 auto 12px;
           animation: floatY 2.5s ease-in-out infinite;
-        }
-
-        .milestone-gulko-img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          border-radius: 50%;
         }
 
         .milestone-modal-card h3 {
@@ -916,18 +921,12 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           z-index: 20;
         }
 
-        .gulko-bottom-mascot img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
-
         .gulko-bottom-mascot.float {
           animation: floatY 3s ease-in-out infinite;
         }
 
         .gulko-bottom-mascot.wave-jump {
-          animation: goalHappyJump 0.4s ease-in-out infinite alternate;
+          animation: victoryGoalBounce 0.4s ease-in-out infinite alternate;
         }
 
         @keyframes floatPikto {
@@ -940,9 +939,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           100% { transform: scale(1.12); }
         }
 
-        @keyframes goalHappyJump {
-          0% { transform: translateY(0) scale(1) rotate(0deg); }
-          100% { transform: translateY(-16px) scale(1.18) rotate(8deg); }
+        @keyframes victoryGoalBounce {
+          0% { transform: scale(1) translateY(0); }
+          100% { transform: scale(1.22) translateY(-14px); }
         }
 
         @keyframes floatY {

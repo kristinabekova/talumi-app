@@ -133,6 +133,20 @@ button:focus-visible{outline:3px solid var(--turquoise);outline-offset:3px}
   margin: 0 auto;
 }
 
+/* Globálne odstránenie štvorcového pozadia pre Guľka naprieč celou aplikáciou */
+img[src*="talumi-gulko"],
+.zone-mascot,
+.gulko-img,
+.player-gulko-img,
+.pure-gulko-render {
+  border-radius: 50% !important;
+  -webkit-border-radius: 50% !important;
+  clip-path: circle(50% at 50% 50%) !important;
+  -webkit-clip-path: circle(50% at 50% 50%) !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
 .crystal-game-card {
   margin-bottom: 0 !important;
 }
