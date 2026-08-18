@@ -51,8 +51,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     "cross_x.png",
     "face_funny.png",
     "puzzle.png",
-    "star_hollow.png"
-  ];
+    "star_hollow.png",
+  ];[cite: 1]
 
   const playSound = (type: "pickup" | "unlock" | "win" | "milestone") => {
     try {
@@ -312,19 +312,22 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
+    // DOSIAHNUTIE CIEĽA: Guľko sa presunie presne do cieľa a 1.2s tam viditeľne oslavuje
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLevelCompletedRef.current) {
         playSound("win");
         isLevelCompletedRef.current = true;
         setIsLevelCompleted(true);
 
+        // Zafixovanie pozície priamo na cieľové pole
         targetPosRef.current = { x: targetC, y: targetR };
         currentPosRef.current = { x: targetC, y: targetR };
         setGulkoPos({ x: targetC, y: targetR });
 
+        // Dostatok času (1200 ms), aby bolo vidieť celé oslavné pulzovanie na minci
         setTimeout(() => {
           handleLevelFinished();
-        }, 900);
+        }, 1200);
       }
     }
   };
@@ -553,18 +556,19 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             );
           })}
 
+          {/* CIEĽOVÁ MINCA COIN SPARK */}
           <div
             className="board-overlay-item"
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${(gridSize - 1) * 100}%), calc(16px + ${(gridSize - 1) * 100}%), 0)`,
-              zIndex: 6,
+              zIndex: 5,
             }}
           >
             <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
               <img
-                src="/talumi-decor/coin_spark.png"
+                src="/talumi-decor/coin_spark.png"[cite: 1]
                 alt="Cieľová minca"
                 className="coin-spark-img"
               />
@@ -572,13 +576,14 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
+          {/* GUĽKO: V CIELI VIDITEĽNE PULZUJE A SKÁČE NAD MINCOU */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-at-goal" : ""}`}
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${gulkoPos.x * 100}%), calc(16px + ${gulkoPos.y * 100}%), 0)`,
-              zIndex: 25,
+              zIndex: 30,
             }}
           >
             <div className="clean-gulko-sphere">
@@ -838,8 +843,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: block;
         }
 
+        /* OSLAVA NA POLÍČKU CIEĽA */
         .smooth-gulko-layer.celebrating-at-goal {
-          animation: victoryGoalPulse 0.42s ease-in-out infinite alternate !important;
+          animation: victoryGoalPulse 0.4s ease-in-out infinite alternate !important;
         }
 
         .milestone-modal-backdrop {
@@ -935,10 +941,20 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           100% { transform: scale(1.12); }
         }
 
+        /* VÝRAZNÝ POSKOK A PULZ V CIELI */
         @keyframes victoryGoalPulse {
-          0% { transform: scale(1) translateY(0); filter: drop-shadow(0 4px 8px rgba(51, 0, 91, 0.3)); }
-          50% { transform: scale(1.28) translateY(-14px) rotate(8deg); filter: drop-shadow(0 0 16px rgba(0, 229, 209, 0.9)); }
-          100% { transform: scale(1.35) translateY(-18px) rotate(-8deg); filter: drop-shadow(0 0 24px rgba(255, 0, 238, 0.9)); }
+          0% {
+            transform: scale(1) translateY(0);
+            filter: drop-shadow(0 4px 10px rgba(51, 0, 91, 0.3));
+          }
+          50% {
+            transform: scale(1.35) translateY(-14px) rotate(8deg);
+            filter: drop-shadow(0 0 18px rgba(0, 229, 209, 0.95));
+          }
+          100% {
+            transform: scale(1.42) translateY(-18px) rotate(-8deg);
+            filter: drop-shadow(0 0 26px rgba(255, 0, 238, 0.95));
+          }
         }
 
         @keyframes floatY {
