@@ -567,6 +567,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
+          {/* GUĽKO: Čistý render bez iOS glitchov */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-goal" : ""}`}
             style={{
@@ -575,11 +576,13 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
               transform: `translate3d(calc(16px + ${gulkoPos.x * 100}%), calc(16px + ${gulkoPos.y * 100}%), 0)`,
             }}
           >
-            <img
-              src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
-              alt="Guľko"
-              className="pure-gulko-render"
-            />
+            <div className="gulko-avatar-wrapper">
+              <img
+                src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
+                alt="Guľko"
+                className="pure-gulko-render"
+              />
+            </div>
           </div>
         </div>
 
@@ -604,6 +607,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           </div>
         )}
 
+        {/* Spodný Guľko maskot */}
         <div className={`gulko-bottom-mascot ${isLevelCompleted ? "wave-jump" : "float"}`}>
           <img
             src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
@@ -615,13 +619,13 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
 
       <style jsx>{`
         .neon-maze-stage {
-          min-height: 100vh;
+          min-height: 100dvh;
           background: radial-gradient(circle at 50% 20%, #ffffff 0%, #f4faff 60%, #eaf4ff 100%);
           display: flex;
           flex-direction: column;
           user-select: none;
           touch-action: none;
-          padding: 16px;
+          padding: 16px 16px env(safe-area-inset-bottom, 24px);
           position: relative;
           overflow: hidden;
         }
@@ -791,6 +795,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: none;
         }
 
+        /* OPRAVA PRE IPHONE A SAFARI */
         .smooth-gulko-layer {
           position: absolute;
           top: 0;
@@ -800,16 +805,29 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 6px;
+          padding: 4px;
           will-change: transform;
+        }
+
+        .gulko-avatar-wrapper {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
         }
 
         .pure-gulko-render {
           width: 100%;
           height: 100%;
           object-fit: contain;
-          background: transparent !important;
-          filter: drop-shadow(0 6px 12px rgba(51, 0, 91, 0.22));
+          display: block;
+          border-radius: 50%;
+          filter: drop-shadow(0 4px 8px rgba(51, 0, 91, 0.25));
+          -webkit-filter: drop-shadow(0 4px 8px rgba(51, 0, 91, 0.25));
         }
 
         .smooth-gulko-layer.celebrating-goal {
@@ -821,6 +839,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           inset: 0;
           background: rgba(51, 0, 91, 0.45);
           backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -852,6 +871,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           width: 100%;
           height: 100%;
           object-fit: contain;
+          border-radius: 50%;
         }
 
         .milestone-modal-card h3 {
@@ -888,11 +908,12 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
 
         .gulko-bottom-mascot {
           position: absolute;
-          bottom: -10px;
-          right: 0px;
-          width: 90px;
-          height: 90px;
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+          right: 12px;
+          width: 80px;
+          height: 80px;
           pointer-events: none;
+          z-index: 20;
         }
 
         .gulko-bottom-mascot img {

@@ -1,33 +1,42 @@
-type GulkoProps = {
-  className?: string;
-  alt?: string;
-  animated?: boolean;
-  celebrating?: boolean;
-};
+"use client";
 
-export function Gulko({ className = "", alt = "Guľko – maskot TALUMI", animated = true, celebrating = false }: GulkoProps) {
+import React from "react";
+
+interface GulkoProps {
+  className?: string;
+  variant?: "default" | "wave" | "blink";
+}
+
+export function Gulko({ className = "", variant = "default" }: GulkoProps) {
+  const file =
+    variant === "wave"
+      ? "/talumi-gulko-wave.png"
+      : variant === "blink"
+      ? "/talumi-gulko-blink.png"
+      : "/talumi-gulko-default.png";
+
   return (
-    <span className={`gulko ${animated ? "gulko-animated" : ""} ${celebrating ? "gulko-celebrating" : ""} ${className}`.trim()}>
-      <img
-        className="gulko-frame gulko-default"
-        src="/talumi-gulko-default.png"
-        alt={alt}
-        draggable={false}
-      />
-      <img
-        className="gulko-frame gulko-blink"
-        src="/talumi-gulko-blink.png"
-        alt=""
-        aria-hidden="true"
-        draggable={false}
-      />
-      <img
-        className="gulko-frame gulko-wave"
-        src="/talumi-gulko-wave-aligned.png"
-        alt=""
-        aria-hidden="true"
-        draggable={false}
-      />
-    </span>
+    <div className={`gulko-wrapper ${className}`}>
+      <img src={file} alt="Guľko" className="gulko-img" />
+      <style jsx>{`
+        .gulko-wrapper {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          overflow: hidden;
+          background: transparent;
+        }
+        .gulko-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          display: block;
+          border-radius: 50%;
+          filter: drop-shadow(0 6px 14px rgba(51, 0, 91, 0.22));
+          -webkit-filter: drop-shadow(0 6px 14px rgba(51, 0, 91, 0.22));
+        }
+      `}</style>
+    </div>
   );
 }
