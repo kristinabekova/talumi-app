@@ -25,41 +25,32 @@ interface Item {
 
 export default function NeonMaze({ onBack }: NeonMazeProps) {
   const [level, setLevel] = useState(1);
-  const [gridSize, setGridSize] = useState(5);
+  const [gridSize, setGridSize] = useState(6); // Hustejšia mriežka pre viac uličiek
   const [maze, setMaze] = useState<Cell[][]>([]);
-  const [playerGrid, setPlayerGrid] = useState<{ r: number; c: number }>({ r: 0, c: 0 });
   const [items, setItems] = useState<Item[]>([]);
-  const [isGateOpen, setIsGateOpen] = useState(false);
+  const [isGateOpen, setIsGateOpen] = useState(true);
   const [isLevelCompleted, setIsLevelCompleted] = useState(false);
 
-  // Plynulá plávajúca pozícia Guľka (sub-pixel súradnice)
-  const [renderPos, setRenderPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const currentPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const targetPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const playerGridRef = useRef<{ r: number; c: number }>({ r: 0, c: 0 });
+  // Pozície pre ultra plynulý beh
+  const [gulkoPos, setGulkoPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const gulkoPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const touchTargetRef = useRef<{ x: number; y: number } | null>(null);
   const mazeRef = useRef<Cell[][]>([]);
+  const itemsRef = useRef<Item[]>([]);
+  const isGateOpenRef = useRef(true);
+  const isLevelCompletedRef = useRef(false);
   const animFrameRef = useRef<number | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isInteractingRef = useRef(false);
 
-  // 15 bežných piktogramov, ktoré Guľko zbiera v ceste
-  const collectableIcons = [
-    "spark_cluster.png",
-    "lightning.png",
-    "percent.png",
-    "eyes_double.png",
-    "star_sharp.png",
-    "dumbbell.png",
-    "star_hollow.png",
+  // Iba vybraných 5 piktogramov na zber
+  const allowedCollectables = [
+    "clover.png",
+    "cross_x.png",
     "face_funny.png",
     "puzzle.png",
-    "arrow_up_right.png",
-    "eye_single.png",
-    "cross_x.png",
-    "ring_oval.png",
-    "clover.png",
-    "coin_spark.png",
+    "star_hollow.png",
   ];
 
   const playSound = (type: "pickup" | "unlock" | "win") => {
@@ -108,7 +99,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     } catch {}
   };
 
-  const generateMaze = (size: number) => {
+  // Komplikovanejší generátor bludiska (viac zákrut a vetiev)
+  const generateComplexMaze = (size: number) => {
     const grid: Cell[][] = [];
     for (let r = 0; r < size; r++) {
       grid[r] = [];
@@ -123,9 +115,11 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     stack.push([0, 0]);
 
     while (stack.length > 0) {
-      const [cr, cc] = stack[stack.length - 1];
-      const neighbors: { r: number; c: number; dir: "top" | "right" | "bottom" | "left" }[] = [];
+      // 35% šanca náhodného výberu z histórie pre viac bočných vetiev a zákrut
+      const idx = Math.random() < 0.35 ? Math.floor(Math.random() * stack.length) : stack.length - 1;
+      const [cr, cc] = stack[idx];
 
+      const neighbors: { r: number; c: number; dir: "top" | "right" | "bottom" | "left" }[] = [];
       if (cr > 0 && !visited[cr - 1][cc]) neighbors.push({ r: cr - 1, c: cc, dir: "top" });
       if (cr < size - 1 && !visited[cr + 1][cc]) neighbors.push({ r: cr + 1, c: cc, dir: "bottom" });
       if (cc > 0 && !visited[cr][cc - 1]) neighbors.push({ r: cr, c: cc - 1, dir: "left" });
@@ -149,53 +143,64 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         visited[next.r][next.c] = true;
         stack.push([next.r, next.c]);
       } else {
-        stack.pop();
+        stack.splice(idx, 1);
       }
     }
     return grid;
   };
 
   const initLevel = () => {
-    const currentSize = 5 + Math.floor((level - 1) / 5);
-    const cappedSize = Math.min(currentSize, 7);
+    // Veľkosť labyrintu od 6x6 po 8x8 pre peknú hustotu
+    const currentSize = 6 + Math.floor((level - 1) / 5);
+    const cappedSize = Math.min(currentSize, 8);
     setGridSize(cappedSize);
 
-    const newMaze = generateMaze(cappedSize);
+    const newMaze = generateComplexMaze(cappedSize);
     mazeRef.current = newMaze;
     setMaze(newMaze);
 
-    playerGridRef.current = { r: 0, c: 0 };
-    setPlayerGrid({ r: 0, c: 0 });
-    currentPosRef.current = { x: 0, y: 0 };
-    targetPosRef.current = { x: 0, y: 0 };
-    setRenderPos({ x: 0, y: 0 });
-    setIsGateOpen(false);
+    gulkoPosRef.current = { x: 0, y: 0 };
+    setGulkoPos({ x: 0, y: 0 });
+    touchTargetRef.current = null;
+    isLevelCompletedRef.current = false;
     setIsLevelCompleted(false);
 
-    const itemCount = Math.min(1 + Math.floor((level - 1) / 4), 3);
-    const newItems: Item[] = [];
-    const usedPositions = new Set<string>();
-    usedPositions.add("0,0");
-    usedPositions.add(`${cappedSize - 1},${cappedSize - 1}`);
+    // Výskyt zberu iba v 30% prípadov
+    const hasItems = Math.random() < 0.3;
+    let newItems: Item[] = [];
 
-    const shuffledIcons = [...collectableIcons].sort(() => Math.random() - 0.5);
+    if (hasItems) {
+      const itemCount = Math.min(1 + Math.floor(Math.random() * 2), 2); // 1 až 2 objekty
+      const usedPositions = new Set<string>();
+      usedPositions.add("0,0");
+      usedPositions.add(`${cappedSize - 1},${cappedSize - 1}`);
 
-    while (newItems.length < itemCount) {
-      const rr = Math.floor(Math.random() * cappedSize);
-      const cc = Math.floor(Math.random() * cappedSize);
-      const key = `${rr},${cc}`;
+      const shuffledIcons = [...allowedCollectables].sort(() => Math.random() - 0.5);
 
-      if (!usedPositions.has(key)) {
-        usedPositions.add(key);
-        newItems.push({
-          id: newItems.length,
-          r: rr,
-          c: cc,
-          collected: false,
-          iconFile: shuffledIcons[newItems.length % shuffledIcons.length],
-        });
+      while (newItems.length < itemCount) {
+        const rr = Math.floor(Math.random() * cappedSize);
+        const cc = Math.floor(Math.random() * cappedSize);
+        const key = `${rr},${cc}`;
+
+        if (!usedPositions.has(key)) {
+          usedPositions.add(key);
+          newItems.push({
+            id: newItems.length,
+            r: rr,
+            c: cc,
+            collected: false,
+            iconFile: shuffledIcons[newItems.length % shuffledIcons.length],
+          });
+        }
       }
+      isGateOpenRef.current = false;
+      setIsGateOpen(false);
+    } else {
+      isGateOpenRef.current = true;
+      setIsGateOpen(true);
     }
+
+    itemsRef.current = newItems;
     setItems(newItems);
   };
 
@@ -203,35 +208,105 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     initLevel();
   }, [level]);
 
-  // Plynulý fyzikálny beh animácie (60fps lerp interpolácia)
+  // Ultra-plynulý kontinuálny fyzikálny engine pre pohyb bez zásekov na zákrutách
   useEffect(() => {
-    const updatePhysicsLoop = () => {
-      const cur = currentPosRef.current;
-      const target = targetPosRef.current;
+    const updateEngine = () => {
+      if (touchTargetRef.current && mazeRef.current.length > 0 && !isLevelCompletedRef.current) {
+        const current = gulkoPosRef.current;
+        const target = touchTargetRef.current;
 
-      const dx = target.x - cur.x;
-      const dy = target.y - cur.y;
+        const currentCellR = Math.round(current.y);
+        const currentCellC = Math.round(current.x);
+        const cell = mazeRef.current[currentCellR]?.[currentCellC];
 
-      if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) {
-        // Plynulé hladké kĺzanie
-        cur.x += dx * 0.22;
-        cur.y += dy * 0.22;
-      } else {
-        cur.x = target.x;
-        cur.y = target.y;
+        if (cell) {
+          const dx = target.x - current.x;
+          const dy = target.y - current.y;
+          const speed = 0.12;
+
+          let moveX = 0;
+          let moveY = 0;
+
+          // Pohyb v X
+          if (Math.abs(dx) > 0.05) {
+            const desiredDirX = Math.sign(dx);
+            const canMoveX =
+              (desiredDirX > 0 && (!cell.right || current.x < currentCellC)) ||
+              (desiredDirX < 0 && (!cell.left || current.x > currentCellC));
+
+            if (canMoveX) {
+              moveX = desiredDirX * Math.min(speed, Math.abs(dx));
+            }
+          }
+
+          // Pohyb v Y
+          if (Math.abs(dy) > 0.05) {
+            const desiredDirY = Math.sign(dy);
+            const canMoveY =
+              (desiredDirY > 0 && (!cell.bottom || current.y < currentCellR)) ||
+              (desiredDirY < 0 && (!cell.top || current.y > currentCellR));
+
+            if (canMoveY) {
+              moveY = desiredDirY * Math.min(speed, Math.abs(dy));
+            }
+          }
+
+          current.x += moveX;
+          current.y += moveY;
+
+          // Magnetické centrovanie do osi chodby pre hladké zaoblenie zákrut
+          if (Math.abs(moveX) > 0 && Math.abs(moveY) === 0) {
+            current.y += (currentCellR - current.y) * 0.18;
+          }
+          if (Math.abs(moveY) > 0 && Math.abs(moveX) === 0) {
+            current.x += (currentCellC - current.x) * 0.18;
+          }
+
+          setGulkoPos({ x: current.x, y: current.y });
+
+          // Zber objektu
+          const items = itemsRef.current;
+          for (let i = 0; i < items.length; i++) {
+            if (!items[i].collected) {
+              const dist = Math.hypot(current.x - items[i].c, current.y - items[i].r);
+              if (dist < 0.45) {
+                playSound("pickup");
+                items[i].collected = true;
+                setItems([...items]);
+
+                if (items.every((it) => it.collected)) {
+                  playSound("unlock");
+                  isGateOpenRef.current = true;
+                  setIsGateOpen(true);
+                }
+              }
+            }
+          }
+
+          // Vstup do cieľa (coin spark)
+          const goalDist = Math.hypot(current.x - (gridSize - 1), current.y - (gridSize - 1));
+          if (goalDist < 0.35 && isGateOpenRef.current && !isLevelCompletedRef.current) {
+            playSound("win");
+            isLevelCompletedRef.current = true;
+            setIsLevelCompleted(true);
+            touchTargetRef.current = null;
+            setTimeout(() => {
+              setLevel((l) => l + 1);
+            }, 1200);
+          }
+        }
       }
 
-      setRenderPos({ x: cur.x, y: cur.y });
-      animFrameRef.current = requestAnimationFrame(updatePhysicsLoop);
+      animFrameRef.current = requestAnimationFrame(updateEngine);
     };
 
-    animFrameRef.current = requestAnimationFrame(updatePhysicsLoop);
+    animFrameRef.current = requestAnimationFrame(updateEngine);
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, []);
+  }, [gridSize]);
 
-  // Vykreslenie čistého 3D neónového labyrintu na Canvas
+  // Vykreslenie 3D stien labyrintu
   const drawMazeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || maze.length === 0) return;
@@ -245,17 +320,17 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     const innerH = height - padding * 2;
     const cellW = innerW / gridSize;
     const cellH = innerH / gridSize;
-    const wallW = Math.max(10, Math.floor(cellW * 0.16));
+    const wallW = Math.max(9, Math.floor(cellW * 0.16));
 
     ctx.clearRect(0, 0, width, height);
 
+    // Biely podklad
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
     ctx.roundRect(padding, padding, innerW, innerH, 24);
     ctx.fill();
 
     const draw3DWall = (x1: number, y1: number, x2: number, y2: number) => {
-      // 1. Spodný hĺbkový tieň
       ctx.lineWidth = wallW;
       ctx.lineCap = "round";
       ctx.strokeStyle = "#008f87";
@@ -264,14 +339,12 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       ctx.lineTo(x2, y2 + 5);
       ctx.stroke();
 
-      // 2. Horná tyrkysová 3D stena
       ctx.strokeStyle = "#00E5D1";
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
 
-      // 3. Jemný svetelný odlesk
       ctx.lineWidth = Math.max(2, wallW * 0.28);
       ctx.strokeStyle = "#b8fff9";
       ctx.beginPath();
@@ -280,7 +353,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       ctx.stroke();
     };
 
-    // Obvodový rám
+    // Rám
     ctx.lineWidth = wallW + 2;
     ctx.lineCap = "round";
     ctx.strokeStyle = "#008f87";
@@ -307,69 +380,13 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     drawMazeCanvas();
   }, [drawMazeCanvas]);
 
-  // Logika postupného kĺzania políčko po políčku
-  const tryMoveStep = (targetR: number, targetC: number) => {
-    const curR = playerGridRef.current.r;
-    const curC = playerGridRef.current.c;
-
-    if (targetR < 0 || targetR >= gridSize || targetC < 0 || targetC >= gridSize) return;
-    if (targetR === curR && targetC === curC) return;
-
-    const dr = targetR - curR;
-    const dc = targetC - curC;
-
-    // Pohyb je povolený len kolmo o 1 políčko
-    if (Math.abs(dr) + Math.abs(dc) !== 1) return;
-
-    const currentCell = mazeRef.current[curR]?.[curC];
-    if (!currentCell) return;
-
-    if (dr === -1 && currentCell.top) return;
-    if (dr === 1 && currentCell.bottom) return;
-    if (dc === -1 && currentCell.left) return;
-    if (dc === 1 && currentCell.right) return;
-
-    // Posun platný
-    playerGridRef.current = { r: targetR, c: targetC };
-    setPlayerGrid({ r: targetR, c: targetC });
-    targetPosRef.current = { x: targetC, y: targetR };
-
-    // Kontrola zberu piktogramu
-    const foundItemIndex = items.findIndex((it) => it.r === targetR && it.c === targetC && !it.collected);
-    if (foundItemIndex !== -1) {
-      playSound("pickup");
-      const updated = [...items];
-      updated[foundItemIndex].collected = true;
-      setItems(updated);
-
-      if (updated.every((it) => it.collected)) {
-        playSound("unlock");
-        setIsGateOpen(true);
-      }
-    }
-
-    // Cieľový portál
-    if (targetR === gridSize - 1 && targetC === gridSize - 1) {
-      const allCollected = items.every((it) => it.collected);
-      if (allCollected && !isLevelCompleted) {
-        playSound("win");
-        setIsLevelCompleted(true);
-        setTimeout(() => {
-          setLevel((l) => l + 1);
-        }, 1200);
-      }
-    }
-  };
-
-  // Plynulé nasledovanie prsta po dráhe
-  const handlePointerInteraction = (clientX: number, clientY: number) => {
+  // Prepočet dotyku na súradnice mriežky
+  const updateTouchTarget = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
-
-    if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
 
     const padding = (16 / 440) * rect.width;
     const innerW = rect.width - padding * 2;
@@ -377,22 +394,10 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     const cellW = innerW / gridSize;
     const cellH = innerH / gridSize;
 
-    const touchC = Math.floor((x - padding) / cellW);
-    const touchR = Math.floor((y - padding) / cellH);
+    const targetC = Math.max(0, Math.min(gridSize - 1, (x - padding) / cellW));
+    const targetR = Math.max(0, Math.min(gridSize - 1, (y - padding) / cellH));
 
-    const curR = playerGridRef.current.r;
-    const curC = playerGridRef.current.c;
-
-    // Ak sa dotýka susedného políčka, plynulo sprav krok
-    if (Math.abs(touchR - curR) + Math.abs(touchC - curC) === 1) {
-      tryMoveStep(touchR, touchC);
-    } else if (touchR !== curR || touchC !== curC) {
-      // Ak potiahol rýchlejšie, vyskúšaj smer po osiach
-      if (touchR > curR) tryMoveStep(curR + 1, curC);
-      else if (touchR < curR) tryMoveStep(curR - 1, curC);
-      else if (touchC > curC) tryMoveStep(curR, curC + 1);
-      else if (touchC < curC) tryMoveStep(curR, curC - 1);
-    }
+    touchTargetRef.current = { x: targetC, y: targetR };
   };
 
   const remainingCount = items.filter((it) => !it.collected).length;
@@ -410,19 +415,30 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             <span className="pill-text">Level {level}</span>
           </div>
 
-          <div className="top-pill">
-            <span className="pill-icon spark-piktogram">✦</span>
-            <span className="pill-text">
-              {isGateOpen ? "Portál otvorený!" : `Zostáva: ${remainingCount}`}
-            </span>
-          </div>
+          {items.length > 0 ? (
+            <div className="top-pill">
+              <span className="pill-icon spark-piktogram">✦</span>
+              <span className="pill-text">
+                {isGateOpen ? "Cieľ otvorený!" : `Objekty: ${remainingCount}`}
+              </span>
+            </div>
+          ) : (
+            <div className="top-pill">
+              <span className="pill-icon spark-piktogram">★</span>
+              <span className="pill-text">Cesta otvorená</span>
+            </div>
+          )}
         </div>
       </header>
 
       <main className="maze-game-area">
         <div className="instructions">
           <h2>Svetelné labyrinty</h2>
-          <p>Nájdi správnu cestu</p>
+          <p>
+            {isGateOpen
+              ? "Cieľ žiari! Preveď Guľka do mince"
+              : "Pozbieraj objekty a odomkni cieľovú mincu"}
+          </p>
         </div>
 
         <div className="maze-interactive-wrap">
@@ -433,22 +449,24 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             className="maze-canvas-element"
             onPointerDown={(e) => {
               isInteractingRef.current = true;
-              handlePointerInteraction(e.clientX, e.clientY);
+              updateTouchTarget(e.clientX, e.clientY);
             }}
             onPointerMove={(e) => {
               if (isInteractingRef.current) {
-                handlePointerInteraction(e.clientX, e.clientY);
+                updateTouchTarget(e.clientX, e.clientY);
               }
             }}
             onPointerUp={() => {
               isInteractingRef.current = false;
+              touchTargetRef.current = null;
             }}
             onPointerCancel={() => {
               isInteractingRef.current = false;
+              touchTargetRef.current = null;
             }}
           />
 
-          {/* 15 ORIGINÁLNYCH PIKTOGRAMOV ZBERU */}
+          {/* OSOBITNÉ PIKTOGRAMY NA ZBER (clover, cross_x, face_funny, puzzle, star_hollow) */}
           {items.map((it) => {
             if (it.collected) return null;
             return (
@@ -463,14 +481,14 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
               >
                 <img
                   src={`/talumi-decor/${it.iconFile}`}
-                  alt="Piktogram"
+                  alt="Zberateľný objekt"
                   className="exact-talumi-piktogram-img"
                 />
               </div>
             );
           })}
 
-          {/* ÚPLNE JEDINEČNÝ NEÓNOVÝ 3D CIEĽOVÝ PORTÁL */}
+          {/* CIEĽOVÝ PIKTOGRAM COIN SPARK: ZASTRETÝ V OPARE ALEBO ŽIARIACI */}
           <div
             className="board-overlay-item"
             style={{
@@ -479,26 +497,23 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
               transform: `translate3d(calc(16px + ${(gridSize - 1) * 100}%), calc(16px + ${(gridSize - 1) * 100}%), 0)`,
             }}
           >
-            <div className={`talumi-unique-portal ${isGateOpen ? "portal-active-energy" : "portal-locked-beacon"}`}>
-              <div className="portal-ring-outer">
-                <div className="portal-ring-inner">
-                  {isGateOpen ? (
-                    <div className="portal-core-diamond">✦</div>
-                  ) : (
-                    <div className="portal-core-lock">🔒</div>
-                  )}
-                </div>
-              </div>
+            <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
+              <img
+                src="/talumi-decor/coin_spark.png"
+                alt="Cieľová minca"
+                className="coin-spark-img"
+              />
+              <div className="goal-haze-overlay" />
             </div>
           </div>
 
-          {/* ULTRA PLYNULÝ GUĽKO S KĹZAVOU FYZIKOU */}
+          {/* ULTRA PLYNULÝ GUĽKO – NASLEDUJE PRST BEZ ZÁSEKOV */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating" : ""}`}
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
-              transform: `translate3d(calc(16px + ${renderPos.x * 100}%), calc(16px + ${renderPos.y * 100}%), 0)`,
+              transform: `translate3d(calc(16px + ${gulkoPos.x * 100}%), calc(16px + ${gulkoPos.y * 100}%), 0)`,
             }}
           >
             <img
@@ -650,59 +665,56 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           z-index: 5;
         }
 
-        /* PIKTOGRAMY */
+        /* ZBERATEĽNÉ PIKTOGRAMY */
         .exact-talumi-piktogram-img {
-          width: 64%;
-          height: 64%;
+          width: 66%;
+          height: 66%;
           object-fit: contain;
           filter: drop-shadow(0 6px 12px rgba(0, 229, 209, 0.45));
           animation: floatPikto 1.8s ease-in-out infinite alternate;
         }
 
-        /* JEDINEČNÝ 3D CIEĽOVÝ PORTÁL */
-        .talumi-unique-portal {
+        /* CIEĽOVÝ COIN SPARK */
+        .coin-spark-goal {
           width: 82%;
           height: 82%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
           position: relative;
-        }
-
-        .portal-ring-outer {
-          width: 100%;
-          height: 100%;
-          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           transition: all 0.4s ease;
         }
 
-        .portal-locked-beacon .portal-ring-outer {
-          border: 3px dashed #bba1d0;
-          background: radial-gradient(circle, #fbf7ff 0%, #efe4fa 80%);
-          box-shadow: inset 0 0 10px rgba(187, 161, 208, 0.3);
+        .coin-spark-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          transition: all 0.4s ease;
         }
 
-        .portal-locked-beacon .portal-core-lock {
-          font-size: 18px;
-          opacity: 0.65;
+        /* Zastretý v bielom opare */
+        .coin-spark-goal.veiled .coin-spark-img {
+          opacity: 0.38;
+          filter: blur(1.5px) grayscale(0.3) brightness(1.2);
         }
 
-        .portal-active-energy .portal-ring-outer {
-          background: radial-gradient(circle, #ff00ee 0%, #9d4edd 50%, #33005b 100%);
-          box-shadow: 0 0 28px rgba(255, 0, 238, 0.95), inset 0 0 16px #ffffff;
-          border: 3px solid #ffffff;
-          animation: portalPulseRotate 2.5s linear infinite;
+        .coin-spark-goal.veiled .goal-haze-overlay {
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.85) 0%, rgba(240, 230, 255, 0.5) 70%, transparent 100%);
+          border: 2px dashed #cbb7dc;
         }
 
-        .portal-active-energy .portal-core-diamond {
-          font-size: 26px;
-          color: #ffffff;
-          font-weight: 1000;
-          text-shadow: 0 0 12px #ffffff, 0 0 24px #00e5d1;
-          animation: diamondSpin 1.5s ease-in-out infinite alternate;
+        /* Odomknutý a žiariaci cieľ */
+        .coin-spark-goal.glowing .coin-spark-img {
+          opacity: 1;
+          filter: drop-shadow(0 0 16px rgba(0, 229, 209, 0.95)) drop-shadow(0 0 24px rgba(255, 209, 102, 0.8));
+          animation: glowCoinPulse 1.4s ease-in-out infinite alternate;
+        }
+
+        .coin-spark-goal.glowing .goal-haze-overlay {
+          display: none;
         }
 
         /* GUĽKO */
@@ -759,15 +771,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           100% { transform: scale(1.08) translateY(-4px); }
         }
 
-        @keyframes portalPulseRotate {
-          0% { transform: rotate(0deg) scale(0.96); }
-          50% { transform: rotate(180deg) scale(1.06); }
-          100% { transform: rotate(360deg) scale(0.96); }
-        }
-
-        @keyframes diamondSpin {
-          0% { transform: scale(0.9); }
-          100% { transform: scale(1.2); }
+        @keyframes glowCoinPulse {
+          0% { transform: scale(0.95); }
+          100% { transform: scale(1.12); }
         }
 
         @keyframes celebrateJump {
