@@ -30,6 +30,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   const [items, setItems] = useState<Item[]>([]);
   const [isGateOpen, setIsGateOpen] = useState(true);
   const [isLevelCompleted, setIsLevelCompleted] = useState(false);
+  const [milestoneMessage, setMilestoneMessage] = useState<string | null>(null);
 
   const [gulkoPos, setGulkoPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const currentPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -51,9 +52,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     "face_funny.png",
     "puzzle.png",
     "star_hollow.png",
-  ];
+  ];[cite: 1]
 
-  const playSound = (type: "pickup" | "unlock" | "win") => {
+  const playSound = (type: "pickup" | "unlock" | "win" | "milestone") => {
     try {
       const AudioCtx =
         window.AudioContext ||
@@ -86,17 +87,38 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         osc.start();
         osc.stop(ctx.currentTime + 0.32);
       } else if (type === "win") {
-        const osc = ctx.createOscillator();
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1046.5, ctx.currentTime + 0.35);
-        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        osc1.type = "sine";
+        osc2.type = "triangle";
+        osc1.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(1046.5, ctx.currentTime + 0.3);
+        osc2.frequency.setValueAtTime(659.25, ctx.currentTime);
+        osc2.frequency.exponentialRampToValueAtTime(1318.5, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.22, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-        osc.connect(gain);
+        osc1.connect(gain);
+        osc2.connect(gain);
         gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.4);
+        osc1.start();
+        osc2.start();
+        osc1.stop(ctx.currentTime + 0.4);
+        osc2.stop(ctx.currentTime + 0.4);
+      } else if (type === "milestone") {
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.1);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + idx * 0.1 + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.1);
+          osc.stop(ctx.currentTime + idx * 0.1 + 0.2);
+        });
       }
     } catch {}
   };
@@ -234,8 +256,27 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     };
   }, []);
 
+  const handleLevelFinished = () => {
+    const nextLevel = level + 1;
+    // Kontrola míľnika po každých 5 vyhratých leveloch
+    if (level % 5 === 0) {
+      playSound("milestone");
+      if (level === 5) {
+        setMilestoneMessage("Si super! Máš úspešne zvládnutých prvých 5 levelov!");
+      } else if (level === 10) {
+        setMilestoneMessage("Už máš 10 levelov! Ide ti to fantasticky!");
+      } else if (level === 15) {
+        setMilestoneMessage("Neuveriteľné! Už máš 15 levelov, si naozaj top!");
+      } else {
+        setMilestoneMessage(`Skvelá práca! Už máš dokončených ${level} levelov!`);
+      }
+    } else {
+      setLevel(nextLevel);
+    }
+  };
+
   const tryMoveTo = (targetR: number, targetC: number) => {
-    if (isLevelCompletedRef.current) return;
+    if (isLevelCompletedRef.current || milestoneMessage) return;
     const curR = gridPosRef.current.r;
     const curC = gridPosRef.current.c;
 
@@ -272,19 +313,22 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
+    // Dosiahnutie cieľa: Guľko sa 0.65 sekundy teší v cieli
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLevelCompletedRef.current) {
         playSound("win");
         isLevelCompletedRef.current = true;
         setIsLevelCompleted(true);
+
         setTimeout(() => {
-          setLevel((l) => l + 1);
-        }, 700);
+          handleLevelFinished();
+        }, 650);
       }
     }
   };
 
   const handlePointerInteraction = (clientX: number, clientY: number) => {
+    if (isLevelCompletedRef.current || milestoneMessage) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -517,7 +561,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           >
             <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
               <img
-                src="/talumi-decor/coin_spark.png"
+                src="/talumi-decor/coin_spark.png"[cite: 1]
                 alt="Cieľová minca"
                 className="coin-spark-img"
               />
@@ -525,6 +569,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
+          {/* GUĽKO: V CIELI MÁVA A VYSKAKUJE V RADOSTI */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-goal" : ""}`}
             style={{
@@ -540,6 +585,28 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             />
           </div>
         </div>
+
+        {/* MÍĽNIKOVÉ OKNO PO KAŽDÝCH 5 LEVELECH */}
+        {milestoneMessage && (
+          <div className="milestone-modal-backdrop">
+            <div className="milestone-modal-card">
+              <div className="milestone-mascot-wrap">
+                <img src="/talumi-gulko-wave.png" alt="Guľko sa teší" className="milestone-gulko-img" />
+              </div>
+              <h3>Paráda!</h3>
+              <p>{milestoneMessage}</p>
+              <button
+                className="milestone-btn"
+                onClick={() => {
+                  setMilestoneMessage(null);
+                  setLevel((l) => l + 1);
+                }}
+              >
+                Pokračovať ďalej →
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className={`gulko-bottom-mascot ${isLevelCompleted ? "wave-jump" : "float"}`}>
           <img
@@ -749,8 +816,80 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           filter: drop-shadow(0 6px 12px rgba(51, 0, 91, 0.22));
         }
 
+        /* RADOSŤ A POSKOK V CIELI */
         .smooth-gulko-layer.celebrating-goal {
-          animation: goalHappyJump 0.35s ease-in-out infinite alternate;
+          animation: goalHappyJump 0.3s ease-in-out infinite alternate;
+        }
+
+        /* MODÁLNE OKNO MÍĽNIKA */
+        .milestone-modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(51, 0, 91, 0.45);
+          backdrop-filter: blur(6px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 100;
+          animation: fadeIn 0.25s ease;
+          padding: 20px;
+        }
+
+        .milestone-modal-card {
+          background: #ffffff;
+          border-radius: 32px;
+          padding: 28px 24px;
+          text-align: center;
+          max-width: 360px;
+          width: 100%;
+          box-shadow: 0 20px 45px rgba(51, 0, 91, 0.25);
+          border: 4px solid #00e5d1;
+          animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .milestone-mascot-wrap {
+          width: 90px;
+          height: 90px;
+          margin: 0 auto 12px;
+          animation: floatY 2.5s ease-in-out infinite;
+        }
+
+        .milestone-gulko-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .milestone-modal-card h3 {
+          font-size: 26px;
+          font-weight: 1000;
+          color: #33005b;
+          margin: 0 0 8px;
+        }
+
+        .milestone-modal-card p {
+          font-size: 16px;
+          font-weight: 700;
+          color: #645675;
+          margin: 0 0 22px;
+          line-height: 1.4;
+        }
+
+        .milestone-btn {
+          width: 100%;
+          padding: 14px;
+          border-radius: 30px;
+          border: 0;
+          background: linear-gradient(135deg, #00e5d1, #00b4a7);
+          color: #ffffff;
+          font-size: 17px;
+          font-weight: 900;
+          cursor: pointer;
+          box-shadow: 0 8px 18px rgba(0, 229, 209, 0.4);
+          transition: transform 0.15s ease;
+        }
+        .milestone-btn:hover {
+          transform: scale(1.04);
         }
 
         .gulko-bottom-mascot {
@@ -787,14 +926,23 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         }
 
         @keyframes goalHappyJump {
-          0% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-16px) scale(1.15) rotate(6deg); }
-          100% { transform: translateY(-20px) scale(1.2) rotate(-6deg); }
+          0% { transform: translateY(0) scale(1) rotate(0deg); }
+          100% { transform: translateY(-16px) scale(1.18) rotate(8deg); }
         }
 
         @keyframes floatY {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes scaleUp {
+          from { transform: scale(0.85); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
         }
       `}</style>
     </div>
