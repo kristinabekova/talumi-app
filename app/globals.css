@@ -122,3 +122,17 @@ button:focus-visible{outline:3px solid var(--turquoise);outline-offset:3px}
   width: 100%;
   text-align: left;
 }
+
+/* Rozostup kariet v Chill zóne */
+.chill-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px !important;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.crystal-game-card {
+  margin-bottom: 0 !important;
+}

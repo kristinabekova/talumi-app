@@ -32,7 +32,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   const [isLevelCompleted, setIsLevelCompleted] = useState(false);
 
   const boardRef = useRef<HTMLDivElement>(null);
-  const isDraggingRef = useRef(false);
+  const isInteractingRef = useRef(false);
 
   const playSound = (type: "pickup" | "unlock" | "win") => {
     try {
@@ -45,25 +45,25 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         const gain = ctx.createGain();
         osc.type = "sine";
         osc.frequency.setValueAtTime(659.25, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(1318.5, ctx.currentTime + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(1318.5, ctx.currentTime + 0.14);
         gain.gain.setValueAtTime(0.18, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.2);
+        osc.stop(ctx.currentTime + 0.18);
       } else if (type === "unlock") {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "triangle";
         osc.frequency.setValueAtTime(440, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.28);
         gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.32);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.35);
+        osc.stop(ctx.currentTime + 0.32);
       } else if (type === "win") {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -130,7 +130,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
 
   const initLevel = () => {
     const currentSize = 5 + Math.floor((level - 1) / 5);
-    const cappedSize = Math.min(currentSize, 8);
+    const cappedSize = Math.min(currentSize, 7);
     setGridSize(cappedSize);
 
     const newMaze = generateMaze(cappedSize);
@@ -163,6 +163,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     initLevel();
   }, [level]);
 
+  // Plynulý posun o krok
   const tryMoveTo = (targetR: number, targetC: number) => {
     if (targetR < 0 || targetR >= gridSize || targetC < 0 || targetC >= gridSize) return;
     if (targetR === playerPos.r && targetC === playerPos.c) return;
@@ -202,7 +203,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         setIsLevelCompleted(true);
         setTimeout(() => {
           setLevel((l) => l + 1);
-        }, 1200);
+        }, 1100);
       }
     }
   };
@@ -228,6 +229,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
 
   return (
     <div className="neon-maze-stage">
+      {/* Horná lišta */}
       <header className="neon-top-bar">
         <button className="back-btn" onClick={onBack} aria-label="Späť do Chill zóny">
           ←
@@ -240,20 +242,22 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           </div>
 
           <div className="top-pill">
-            <span className="pill-icon star-icon">★</span>
+            <span className="pill-icon spark-piktogram">✦</span>
             <span className="pill-text">
-              {isGateOpen ? "Cieľ odomknutý!" : `Hviezdy: ${remainingCount}`}
+              {isGateOpen ? "Portál aktívny!" : `Iskry: ${remainingCount}`}
             </span>
           </div>
         </div>
       </header>
 
+      {/* Herná plocha */}
       <main className="maze-game-area">
         <div className="instructions">
           <h2>Svetelné labyrinty</h2>
           <p>Nájdi správnu cestu</p>
         </div>
 
+        {/* Labyrintová hracia plocha */}
         <div
           ref={boardRef}
           className={`maze-board ${isGateOpen ? "gate-ready" : ""}`}
@@ -262,26 +266,25 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             gridTemplateRows: `repeat(${gridSize}, 1fr)`,
           }}
           onPointerDown={(e) => {
-            isDraggingRef.current = true;
+            isInteractingRef.current = true;
             handlePointerInteraction(e.clientX, e.clientY);
           }}
           onPointerMove={(e) => {
-            if (isDraggingRef.current) {
+            if (isInteractingRef.current) {
               handlePointerInteraction(e.clientX, e.clientY);
             }
           }}
           onPointerUp={() => {
-            isDraggingRef.current = false;
+            isInteractingRef.current = false;
           }}
           onPointerCancel={() => {
-            isDraggingRef.current = false;
+            isInteractingRef.current = false;
           }}
         >
           {maze.map((row, r) =>
             row.map((cell, c) => {
               const isGoal = r === gridSize - 1 && c === gridSize - 1;
-              const hasStar = items.some((it) => it.r === r && it.c === c && !it.collected);
-              const isPlayer = playerPos.r === r && playerPos.c === c;
+              const hasSpark = items.some((it) => it.r === r && it.c === c && !it.collected);
 
               return (
                 <div
@@ -290,33 +293,44 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
                     cell.right ? "wall-right" : ""
                   } ${cell.bottom ? "wall-bottom" : ""} ${cell.left ? "wall-left" : ""}`}
                 >
-                  {hasStar && (
-                    <div className="star-collectible">
-                      <span className="star-pulse">★</span>
+                  {/* Piktogram zberateľnej 3D iskry z TALUMI sady */}
+                  {hasSpark && (
+                    <div className="spark-item-wrapper">
+                      <div className="spark-crystal">✦</div>
                     </div>
                   )}
 
+                  {/* Cieľový portál */}
                   {isGoal && (
-                    <div className={`goal-gate ${isGateOpen ? "open" : "locked"}`}>
-                      <span>{isGateOpen ? "★" : "🔒"}</span>
-                    </div>
-                  )}
-
-                  {isPlayer && (
-                    <div className={`player-gulko ${isLevelCompleted ? "celebrating" : ""}`}>
-                      <img
-                        src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
-                        alt="Guľko"
-                        className="player-gulko-img"
-                      />
+                    <div className={`talumi-portal ${isGateOpen ? "portal-active" : "portal-idle"}`}>
+                      <div className="portal-ring">
+                        <div className="portal-core" />
+                      </div>
                     </div>
                   )}
                 </div>
               );
             })
           )}
+
+          {/* PLYNULO KĹZAJÚCI GUĽKO */}
+          <div
+            className={`smooth-player-gulko ${isLevelCompleted ? "celebrating" : ""}`}
+            style={{
+              width: `calc(100% / ${gridSize})`,
+              height: `calc(100% / ${gridSize})`,
+              transform: `translate(${playerPos.c * 100}%, ${playerPos.r * 100}%)`,
+            }}
+          >
+            <img
+              src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
+              alt="Guľko"
+              className="player-gulko-img"
+            />
+          </div>
         </div>
 
+        {/* Spodný Guľko maskot */}
         <div className={`gulko-bottom-mascot ${isLevelCompleted ? "wave-jump" : "float"}`}>
           <img
             src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
@@ -386,8 +400,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           color: #33005b;
         }
 
-        .star-icon {
-          color: #9d4edd;
+        .spark-piktogram {
+          color: #00d3c5;
+          font-weight: 900;
         }
 
         .pill-text {
@@ -426,10 +441,11 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           font-weight: 700;
         }
 
+        /* Labyrintová plocha */
         .maze-board {
           width: min(88vw, 440px);
           aspect-ratio: 1;
-          background: rgba(255, 255, 255, 0.95);
+          background: rgba(255, 255, 255, 0.96);
           border: 4px solid #00d3c5;
           border-radius: 28px;
           display: grid;
@@ -441,8 +457,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         }
 
         .maze-board.gate-ready {
-          border-color: #9d4edd;
-          box-shadow: 0 0 28px rgba(157, 78, 221, 0.4);
+          border-color: #ff00ee;
+          box-shadow: 0 0 30px rgba(255, 0, 238, 0.4);
         }
 
         .maze-cell {
@@ -465,59 +481,95 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           border-left: 4px solid #00b4a7;
         }
 
-        .star-collectible {
-          font-size: clamp(22px, 5vw, 30px);
-          color: #9d4edd;
-          animation: pulseStar 1.4s ease-in-out infinite;
-          pointer-events: none;
-          text-shadow: 0 0 10px rgba(157, 78, 221, 0.6);
-        }
-
-        .goal-gate {
-          width: 82%;
-          height: 82%;
-          border-radius: 14px;
+        /* Zberateľná iskra */
+        .spark-item-wrapper {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 22px;
-          font-weight: 900;
+          width: 70%;
+          height: 70%;
+          border-radius: 50%;
+          background: radial-gradient(circle, #80fbf1 0%, rgba(0, 211, 197, 0.2) 70%, transparent 100%);
+          animation: pulseSpark 1.5s ease-in-out infinite;
+        }
+
+        .spark-crystal {
+          font-size: clamp(20px, 4.5vw, 28px);
+          color: #00d3c5;
+          font-weight: 1000;
+          text-shadow: 0 0 8px #00e5d1, 0 0 16px rgba(184, 80, 255, 0.6);
+        }
+
+        /* Portál cieľa */
+        .talumi-portal {
+          width: 80%;
+          height: 80%;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
           transition: all 0.3s ease;
         }
 
-        .goal-gate.locked {
-          background: #f0e6f7;
-          color: #8c7a9c;
-          border: 2px dashed #bba1d0;
+        .talumi-portal.portal-idle {
+          border: 3px dashed #bba1d0;
+          background: #f8f1fc;
         }
 
-        .goal-gate.open {
-          background: linear-gradient(135deg, #9d4edd, #ff00ee);
-          color: #ffffff;
-          box-shadow: 0 0 20px rgba(255, 0, 238, 0.8);
-          animation: glowGate 1.2s ease-in-out infinite alternate;
+        .talumi-portal.portal-idle .portal-core {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #bba1d0;
         }
 
-        .player-gulko {
-          position: absolute;
-          width: 86%;
-          height: 86%;
+        .talumi-portal.portal-active {
+          background: radial-gradient(circle, #ff00ee 0%, #760cc7 60%, transparent 100%);
+          box-shadow: 0 0 22px rgba(255, 0, 238, 0.85);
+          animation: portalSpin 3s linear infinite;
+        }
+
+        .talumi-portal.portal-active .portal-ring {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          border: 3px solid #00f0ff;
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        .talumi-portal.portal-active .portal-core {
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow: 0 0 12px #ffffff;
+        }
+
+        /* PLYNULÝ POHYB GUĽKA S INTERPOLÁCIOU */
+        .smooth-player-gulko {
+          position: absolute;
+          top: 6px;
+          left: 6px;
           pointer-events: none;
-          z-index: 5;
-          transition: all 0.1s ease-out;
+          z-index: 10;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 4px;
+          transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.25, 1);
         }
 
         .player-gulko-img {
-          width: 100%;
-          height: 100%;
+          width: 88%;
+          height: 88%;
           object-fit: contain;
-          filter: drop-shadow(0 4px 8px rgba(51, 0, 91, 0.25));
+          filter: drop-shadow(0 6px 10px rgba(51, 0, 91, 0.25));
         }
 
-        .player-gulko.celebrating {
+        .smooth-player-gulko.celebrating {
           animation: jumpCelebrate 0.5s ease infinite alternate;
         }
 
@@ -544,14 +596,14 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           animation: jumpCelebrate 0.6s ease-in-out infinite alternate;
         }
 
-        @keyframes pulseStar {
-          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(157, 78, 221, 0.4)); }
-          50% { transform: scale(1.2); filter: drop-shadow(0 0 10px rgba(157, 78, 221, 0.9)); }
+        @keyframes pulseSpark {
+          0%, 100% { transform: scale(0.95); }
+          50% { transform: scale(1.1); }
         }
 
-        @keyframes glowGate {
-          0% { transform: scale(0.96); box-shadow: 0 0 10px rgba(255, 0, 238, 0.5); }
-          100% { transform: scale(1.06); box-shadow: 0 0 24px rgba(255, 0, 238, 0.95); }
+        @keyframes portalSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
 
         @keyframes jumpCelebrate {
