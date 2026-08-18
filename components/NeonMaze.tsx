@@ -52,7 +52,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     "face_funny.png",
     "puzzle.png",
     "star_hollow.png",
-  ];[cite: 1]
+  ];
 
   const playSound = (type: "pickup" | "unlock" | "win" | "milestone") => {
     try {
@@ -258,7 +258,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
 
   const handleLevelFinished = () => {
     const nextLevel = level + 1;
-    // Kontrola míľnika po každých 5 vyhratých leveloch
     if (level % 5 === 0) {
       playSound("milestone");
       if (level === 5) {
@@ -313,7 +312,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
-    // Dosiahnutie cieľa: Guľko sa 0.65 sekundy teší v cieli
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLevelCompletedRef.current) {
         playSound("win");
@@ -561,7 +559,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           >
             <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
               <img
-                src="/talumi-decor/coin_spark.png"[cite: 1]
+                src="/talumi-decor/coin_spark.png"
                 alt="Cieľová minca"
                 className="coin-spark-img"
               />
@@ -569,7 +567,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO: V CIELI MÁVA A VYSKAKUJE V RADOSTI */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-goal" : ""}`}
             style={{
@@ -586,7 +583,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           </div>
         </div>
 
-        {/* MÍĽNIKOVÉ OKNO PO KAŽDÝCH 5 LEVELECH */}
         {milestoneMessage && (
           <div className="milestone-modal-backdrop">
             <div className="milestone-modal-card">
@@ -816,12 +812,10 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           filter: drop-shadow(0 6px 12px rgba(51, 0, 91, 0.22));
         }
 
-        /* RADOSŤ A POSKOK V CIELI */
         .smooth-gulko-layer.celebrating-goal {
           animation: goalHappyJump 0.3s ease-in-out infinite alternate;
         }
 
-        /* MODÁLNE OKNO MÍĽNIKA */
         .milestone-modal-backdrop {
           position: fixed;
           inset: 0;
