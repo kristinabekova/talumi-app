@@ -51,8 +51,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     "cross_x.png",
     "face_funny.png",
     "puzzle.png",
-    "star_hollow.png",
-  ];[cite: 1]
+    "star_hollow.png"
+  ];
 
   const playSound = (type: "pickup" | "unlock" | "win" | "milestone") => {
     try {
@@ -312,19 +312,16 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
-    // Dosiahnutie cieľa: Guľko sa presne presunie do cieľovej bunky a spustí pulzovanie priamo v cieli
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLevelCompletedRef.current) {
         playSound("win");
         isLevelCompletedRef.current = true;
         setIsLevelCompleted(true);
 
-        // Okamžite zafixujeme cieľové súradnice
         targetPosRef.current = { x: targetC, y: targetR };
         currentPosRef.current = { x: targetC, y: targetR };
         setGulkoPos({ x: targetC, y: targetR });
 
-        // Dostatok času na animáciu pulzovania v cieli (900ms)
         setTimeout(() => {
           handleLevelFinished();
         }, 900);
@@ -556,7 +553,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             );
           })}
 
-          {/* CIEĽOVÁ MINCA COIN SPARK */}
           <div
             className="board-overlay-item"
             style={{
@@ -568,7 +564,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           >
             <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
               <img
-                src="/talumi-decor/coin_spark.png"[cite: 1]
+                src="/talumi-decor/coin_spark.png"
                 alt="Cieľová minca"
                 className="coin-spark-img"
               />
@@ -576,7 +572,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO: V CIELI ZOSTÁVA NA CIEĽOVOM POLÍČKU A PULZUJE S OSLAVNÝM GESTOM */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-at-goal" : ""}`}
             style={{
@@ -843,7 +838,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: block;
         }
 
-        /* OSLAVNÉ PULZOVANIE A VÝSKOK PRIAMO V BUNKE CIEĽA */
         .smooth-gulko-layer.celebrating-at-goal {
           animation: victoryGoalPulse 0.42s ease-in-out infinite alternate !important;
         }
@@ -941,7 +935,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           100% { transform: scale(1.12); }
         }
 
-        /* PULZOVANIE A VÝSKOK V CIELI */
         @keyframes victoryGoalPulse {
           0% { transform: scale(1) translateY(0); filter: drop-shadow(0 4px 8px rgba(51, 0, 91, 0.3)); }
           50% { transform: scale(1.28) translateY(-14px) rotate(8deg); filter: drop-shadow(0 0 16px rgba(0, 229, 209, 0.9)); }
