@@ -31,11 +31,12 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   const [isGateOpen, setIsGateOpen] = useState(true);
   const [isLevelCompleted, setIsLevelCompleted] = useState(false);
 
-  // Pozície a fyzika
+  // Plynulý rendering pozície
   const [gulkoPos, setGulkoPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const gulkoPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const touchTargetRef = useRef<{ x: number; y: number } | null>(null);
-  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const currentPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const targetPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const gridPosRef = useRef<{ r: number; c: number }>({ r: 0, c: 0 });
+
   const mazeRef = useRef<Cell[][]>([]);
   const itemsRef = useRef<Item[]>([]);
   const isGateOpenRef = useRef(true);
@@ -43,16 +44,15 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   const animFrameRef = useRef<number | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isInteractingRef = useRef(false);
+  const isPointerActiveRef = useRef(false);
 
-  // 5 vybraných piktogramov
   const allowedCollectables = [
     "clover.png",
     "cross_x.png",
     "face_funny.png",
     "puzzle.png",
     "star_hollow.png",
-  ];
+  ];[cite: 1]
 
   const playSound = (type: "pickup" | "unlock" | "win") => {
     try {
@@ -77,13 +77,13 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         const gain = ctx.createGain();
         osc.type = "triangle";
         osc.frequency.setValueAtTime(440, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.28);
         gain.gain.setValueAtTime(0.22, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.32);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.35);
+        osc.stop(ctx.currentTime + 0.32);
       } else if (type === "win") {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -157,9 +157,11 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     mazeRef.current = newMaze;
     setMaze(newMaze);
 
-    gulkoPosRef.current = { x: 0, y: 0 };
+    gridPosRef.current = { r: 0, c: 0 };
+    currentPosRef.current = { x: 0, y: 0 };
+    targetPosRef.current = { x: 0, y: 0 };
     setGulkoPos({ x: 0, y: 0 });
-    touchTargetRef.current = null;
+
     isLevelCompletedRef.current = false;
     setIsLevelCompleted(false);
 
@@ -205,116 +207,126 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     initLevel();
   }, [level]);
 
-  // Optimalizovaný mobilný fyzikálny loop s plynulým vedením zákrut
+  // STABILNÁ ANIMÁCIA BEZ TRASENIA (Čistá Lerp interpolácia)
   useEffect(() => {
-    const updateEngine = () => {
-      if (touchTargetRef.current && mazeRef.current.length > 0 && !isLevelCompletedRef.current) {
-        const current = gulkoPosRef.current;
-        const target = touchTargetRef.current;
+    const renderLoop = () => {
+      const cur = currentPosRef.current;
+      const target = targetPosRef.current;
 
-        const currentCellR = Math.round(current.y);
-        const currentCellC = Math.round(current.x);
-        const cell = mazeRef.current[currentCellR]?.[currentCellC];
+      const dx = target.x - cur.x;
+      const dy = target.y - cur.y;
 
-        if (cell) {
-          const dx = target.x - current.x;
-          const dy = target.y - current.y;
-          const speed = 0.16; // Rýchlejšia odozva na prst
-
-          let moveX = 0;
-          let moveY = 0;
-
-          // Voľba primárnej osi podľa sily ťahu prsta
-          if (Math.abs(dx) >= Math.abs(dy)) {
-            const dirX = Math.sign(dx);
-            const canX =
-              (dirX > 0 && (!cell.right || current.x < currentCellC)) ||
-              (dirX < 0 && (!cell.left || current.x > currentCellC));
-
-            if (canX) {
-              moveX = dirX * Math.min(speed, Math.abs(dx));
-            } else if (Math.abs(dy) > 0.08) {
-              const dirY = Math.sign(dy);
-              const canY =
-                (dirY > 0 && (!cell.bottom || current.y < currentCellR)) ||
-                (dirY < 0 && (!cell.top || current.y > currentCellR));
-              if (canY) moveY = dirY * Math.min(speed, Math.abs(dy));
-            }
-          } else {
-            const dirY = Math.sign(dy);
-            const canY =
-              (dirY > 0 && (!cell.bottom || current.y < currentCellR)) ||
-              (dirY < 0 && (!cell.top || current.y > currentCellR));
-
-            if (canY) {
-              moveY = dirY * Math.min(speed, Math.abs(dy));
-            } else if (Math.abs(dx) > 0.08) {
-              const dirX = Math.sign(dx);
-              const canX =
-                (dirX > 0 && (!cell.right || current.x < currentCellC)) ||
-                (dirX < 0 && (!cell.left || current.x > currentCellC));
-              if (canX) moveX = dirX * Math.min(speed, Math.abs(dx));
-            }
-          }
-
-          current.x += moveX;
-          current.y += moveY;
-
-          // Automatické hladké centrovanie v chodbe pre ľahké zatáčanie
-          if (Math.abs(moveX) > 0 && Math.abs(moveY) === 0) {
-            current.y += (currentCellR - current.y) * 0.25;
-          }
-          if (Math.abs(moveY) > 0 && Math.abs(moveX) === 0) {
-            current.x += (currentCellC - current.x) * 0.25;
-          }
-
-          setGulkoPos({ x: current.x, y: current.y });
-
-          // Zber piktogramov
-          const items = itemsRef.current;
-          for (let i = 0; i < items.length; i++) {
-            if (!items[i].collected) {
-              const dist = Math.hypot(current.x - items[i].c, current.y - items[i].r);
-              if (dist < 0.5) {
-                playSound("pickup");
-                items[i].collected = true;
-                setItems([...items]);
-
-                if (items.every((it) => it.collected)) {
-                  playSound("unlock");
-                  isGateOpenRef.current = true;
-                  setIsGateOpen(true);
-                }
-              }
-            }
-          }
-
-          // Vstup do cieľa s polsekundovým poskokom radosti
-          const goalDist = Math.hypot(current.x - (gridSize - 1), current.y - (gridSize - 1));
-          if (goalDist < 0.4 && isGateOpenRef.current && !isLevelCompletedRef.current) {
-            playSound("win");
-            isLevelCompletedRef.current = true;
-            setIsLevelCompleted(true);
-            touchTargetRef.current = null;
-
-            // 0.6s poskok pred prechodom do ďalšieho levelu
-            setTimeout(() => {
-              setLevel((l) => l + 1);
-            }, 750);
-          }
-        }
+      if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) {
+        cur.x += dx * 0.26;
+        cur.y += dy * 0.26;
+      } else {
+        cur.x = target.x;
+        cur.y = target.y;
       }
 
-      animFrameRef.current = requestAnimationFrame(updateEngine);
+      setGulkoPos({ x: cur.x, y: cur.y });
+      animFrameRef.current = requestAnimationFrame(renderLoop);
     };
 
-    animFrameRef.current = requestAnimationFrame(updateEngine);
+    animFrameRef.current = requestAnimationFrame(renderLoop);
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [gridSize]);
+  }, []);
 
-  // Vykreslenie 3D stien labyrintu
+  // Pokus o posun do susedného políčka bez záseku
+  const tryMoveTo = (targetR: number, targetC: number) => {
+    if (isLevelCompletedRef.current) return;
+    const curR = gridPosRef.current.r;
+    const curC = gridPosRef.current.c;
+
+    if (targetR < 0 || targetR >= gridSize || targetC < 0 || targetC >= gridSize) return;
+    if (targetR === curR && targetC === curC) return;
+
+    const dr = targetR - curR;
+    const dc = targetC - curC;
+
+    // Pohyb je povolený len o 1 krok
+    if (Math.abs(dr) + Math.abs(dc) !== 1) return;
+
+    const currentCell = mazeRef.current[curR]?.[curC];
+    if (!currentCell) return;
+
+    if (dr === -1 && currentCell.top) return;
+    if (dr === 1 && currentCell.bottom) return;
+    if (dc === -1 && currentCell.left) return;
+    if (dc === 1 && currentCell.right) return;
+
+    // Platný krok
+    gridPosRef.current = { r: targetR, c: targetC };
+    targetPosRef.current = { x: targetC, y: targetR };
+
+    // Zber piktogramov
+    const items = itemsRef.current;
+    const foundIdx = items.findIndex((it) => it.r === targetR && it.c === targetC && !it.collected);
+    if (foundIdx !== -1) {
+      playSound("pickup");
+      items[foundIdx].collected = true;
+      setItems([...items]);
+
+      if (items.every((it) => it.collected)) {
+        playSound("unlock");
+        isGateOpenRef.current = true;
+        setIsGateOpen(true);
+      }
+    }
+
+    // Dosiahnutie cieľa
+    if (targetR === gridSize - 1 && targetC === gridSize - 1) {
+      if (isGateOpenRef.current && !isLevelCompletedRef.current) {
+        playSound("win");
+        isLevelCompletedRef.current = true;
+        setIsLevelCompleted(true);
+        setTimeout(() => {
+          setLevel((l) => l + 1);
+        }, 700);
+      }
+    }
+  };
+
+  // Spracovanie dotyku/myši
+  const handlePointerInteraction = (clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+
+    const padding = (14 / 440) * rect.width;
+    const innerW = rect.width - padding * 2;
+    const innerH = rect.height - padding * 2;
+    const cellW = innerW / gridSize;
+    const cellH = innerH / gridSize;
+
+    const touchC = Math.floor((x - padding) / cellW);
+    const touchR = Math.floor((y - padding) / cellH);
+
+    const curR = gridPosRef.current.r;
+    const curC = gridPosRef.current.c;
+
+    if (Math.abs(touchR - curR) + Math.abs(touchC - curC) === 1) {
+      tryMoveTo(touchR, touchC);
+    } else {
+      // Voľba smeru podľa gesta
+      const dx = (x - padding) / cellW - (curC + 0.5);
+      const dy = (y - padding) / cellH - (curR + 0.5);
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 0.4) tryMoveTo(curR, curC + 1);
+        else if (dx < -0.4) tryMoveTo(curR, curC - 1);
+      } else {
+        if (dy > 0.4) tryMoveTo(curR + 1, curC);
+        else if (dy < -0.4) tryMoveTo(curR - 1, curC);
+      }
+    }
+  };
+
+  // ZJEDNOTENÝ A ATRAKTÍVNY 3D RENDER LABYRINTU
   const drawMazeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || maze.length === 0) return;
@@ -328,84 +340,103 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     const innerH = height - padding * 2;
     const cellW = innerW / gridSize;
     const cellH = innerH / gridSize;
-    const wallW = Math.max(9, Math.floor(cellW * 0.16));
+    const wallW = Math.max(10, Math.floor(cellW * 0.18));
 
     ctx.clearRect(0, 0, width, height);
 
-    ctx.fillStyle = "#ffffff";
+    // 1. Podklad dráh s jemným radiálnym prechodom a neónovým svetlom
+    const bgGrad = ctx.createRadialGradient(
+      width / 2,
+      height / 2,
+      20,
+      width / 2,
+      height / 2,
+      width * 0.7
+    );
+    bgGrad.addColorStop(0, "#ffffff");
+    bgGrad.addColorStop(1, "#f4fbff");
+
+    ctx.fillStyle = bgGrad;
     ctx.beginPath();
-    ctx.roundRect(padding, padding, innerW, innerH, 24);
+    ctx.roundRect(padding, padding, innerW, innerH, 20);
     ctx.fill();
 
-    const draw3DWall = (x1: number, y1: number, x2: number, y2: number) => {
-      ctx.lineWidth = wallW;
-      ctx.lineCap = "round";
-      ctx.strokeStyle = "#008f87";
+    // Jemná dekoratívna mriežka na pozadí dráh
+    ctx.strokeStyle = "rgba(0, 229, 209, 0.08)";
+    ctx.lineWidth = 1.5;
+    for (let i = 1; i < gridSize; i++) {
       ctx.beginPath();
-      ctx.moveTo(x1, y1 + 5);
-      ctx.lineTo(x2, y2 + 5);
+      ctx.moveTo(padding + i * cellW, padding);
+      ctx.lineTo(padding + i * cellW, padding + innerH);
       ctx.stroke();
 
-      ctx.strokeStyle = "#00E5D1";
       ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
+      ctx.moveTo(padding, padding + i * cellH);
+      ctx.lineTo(padding + innerW, padding + i * cellH);
       ctx.stroke();
+    }
 
-      ctx.lineWidth = Math.max(2, wallW * 0.28);
-      ctx.strokeStyle = "#b8fff9";
+    // 2. Vykreslenie všetkých stien naraz pre dokonalé zaoblenie križovatiek
+    const buildWallPath = (offsetY: number) => {
       ctx.beginPath();
-      ctx.moveTo(x1, y1 - 1);
-      ctx.lineTo(x2, y2 - 1);
-      ctx.stroke();
+      // Obvodový rám
+      ctx.roundRect(padding, padding + offsetY, innerW, innerH, 18);
+
+      // Vnútorné steny
+      for (let r = 0; r < gridSize; r++) {
+        for (let c = 0; c < gridSize; c++) {
+          const cell = maze[r][c];
+          const x = padding + c * cellW;
+          const y = padding + r * cellH;
+
+          if (cell.top && r > 0) {
+            ctx.moveTo(x, y + offsetY);
+            ctx.lineTo(x + cellW, y + offsetY);
+          }
+          if (cell.left && c > 0) {
+            ctx.moveTo(x, y + offsetY);
+            ctx.lineTo(x, y + cellH + offsetY);
+          }
+          if (cell.bottom && r < gridSize - 1) {
+            ctx.moveTo(x, y + cellH + offsetY);
+            ctx.lineTo(x + cellW, y + cellH + offsetY);
+          }
+          if (cell.right && c < gridSize - 1) {
+            ctx.moveTo(x + cellW, y + offsetY);
+            ctx.lineTo(x + cellW, y + cellH + offsetY);
+          }
+        }
+      }
     };
 
-    // Rám
-    ctx.lineWidth = wallW + 2;
+    // Spodný 3D hĺbkový tieň
+    ctx.lineWidth = wallW;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.strokeStyle = "#008f87";
-    ctx.strokeRect(padding, padding + 5, innerW, innerH);
+    buildWallPath(5);
+    ctx.stroke();
+
+    // Hlavná tyrkysová 3D stena
+    ctx.lineWidth = wallW;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.strokeStyle = "#00E5D1";
-    ctx.strokeRect(padding, padding, innerW, innerH);
+    buildWallPath(0);
+    ctx.stroke();
 
-    // Vnútorné steny
-    for (let r = 0; r < gridSize; r++) {
-      for (let c = 0; c < gridSize; c++) {
-        const cell = maze[r][c];
-        const x = padding + c * cellW;
-        const y = padding + r * cellH;
-
-        if (cell.top && r > 0) draw3DWall(x, y, x + cellW, y);
-        if (cell.left && c > 0) draw3DWall(x, y, x, y + cellH);
-        if (cell.bottom && r < gridSize - 1) draw3DWall(x, y + cellH, x + cellW, y + cellH);
-        if (cell.right && c < gridSize - 1) draw3DWall(x + cellW, y, x + cellW, y + cellH);
-      }
-    }
+    // Vrchný lesklý neónový pruh pre hĺbku
+    ctx.lineWidth = Math.max(3, wallW * 0.3);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#b3fff8";
+    buildWallPath(-1.5);
+    ctx.stroke();
   }, [maze, gridSize]);
 
   useEffect(() => {
     drawMazeCanvas();
   }, [drawMazeCanvas]);
-
-  // Dotykové ovládanie pre mobily a tablety
-  const handleTouchInteraction = (clientX: number, clientY: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-
-    const padding = (16 / 440) * rect.width;
-    const innerW = rect.width - padding * 2;
-    const innerH = rect.height - padding * 2;
-    const cellW = innerW / gridSize;
-    const cellH = innerH / gridSize;
-
-    const targetC = Math.max(0, Math.min(gridSize - 1, (x - padding) / cellW));
-    const targetR = Math.max(0, Math.min(gridSize - 1, (y - padding) / cellH));
-
-    touchTargetRef.current = { x: targetC, y: targetR };
-  };
 
   const remainingCount = items.filter((it) => !it.collected).length;
 
@@ -455,21 +486,19 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             height={440}
             className="maze-canvas-element"
             onPointerDown={(e) => {
-              isInteractingRef.current = true;
-              handleTouchInteraction(e.clientX, e.clientY);
+              isPointerActiveRef.current = true;
+              handlePointerInteraction(e.clientX, e.clientY);
             }}
             onPointerMove={(e) => {
-              if (isInteractingRef.current) {
-                handleTouchInteraction(e.clientX, e.clientY);
+              if (isPointerActiveRef.current) {
+                handlePointerInteraction(e.clientX, e.clientY);
               }
             }}
             onPointerUp={() => {
-              isInteractingRef.current = false;
-              touchTargetRef.current = null;
+              isPointerActiveRef.current = false;
             }}
             onPointerCancel={() => {
-              isInteractingRef.current = false;
-              touchTargetRef.current = null;
+              isPointerActiveRef.current = false;
             }}
           />
 
@@ -506,7 +535,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           >
             <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
               <img
-                src="/talumi-decor/coin_spark.png"
+                src="/talumi-decor/coin_spark.png"[cite: 1]
                 alt="Cieľová minca"
                 className="coin-spark-img"
               />
@@ -514,7 +543,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO S RADOSŤOU A POSKOKOM V CIELI */}
+          {/* GUĽKO */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-goal" : ""}`}
             style={{
@@ -643,6 +672,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           font-weight: 700;
         }
 
+        /* 3D PLOCHA LABYRINTU */
         .maze-interactive-wrap {
           position: relative;
           width: min(88vw, 440px);
@@ -671,6 +701,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           z-index: 5;
         }
 
+        /* PIKTOGRAMY */
         .exact-talumi-piktogram-img {
           width: 66%;
           height: 66%;
@@ -679,6 +710,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           animation: floatPikto 1.8s ease-in-out infinite alternate;
         }
 
+        /* CIEĽOVÝ COIN SPARK */
         .coin-spark-goal {
           width: 82%;
           height: 82%;
@@ -719,6 +751,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: none;
         }
 
+        /* GUĽKO */
         .smooth-gulko-layer {
           position: absolute;
           top: 0;
@@ -740,7 +773,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           filter: drop-shadow(0 6px 12px rgba(51, 0, 91, 0.22));
         }
 
-        /* OSLAVNÝ POSKOK V CIELI */
         .smooth-gulko-layer.celebrating-goal {
           animation: goalHappyJump 0.35s ease-in-out infinite alternate;
         }
