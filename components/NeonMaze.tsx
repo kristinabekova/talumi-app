@@ -314,7 +314,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
-    // Dosiahnutie cieľa
+    // DOSIAHNUTIE CIEĽA: Zablokovanie a oslava v cieli na minci
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLockedRef.current) {
         isLockedRef.current = true;
@@ -328,7 +328,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         const currentLvl = level;
         setTimeout(() => {
           proceedToNextLevel(currentLvl);
-        }, 1300);
+        }, 1400);
       }
     }
   };
@@ -577,9 +577,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO: PÔVODNÝ ŽIVÝ ŽMURKAJÚCI KOMPONENT */}
+          {/* GUĽKO: ORIGINÁLNY ŽIVÝ KOMPONENT, KTORÝ PRIRODZENE LEVITUJE A ŽMURKÁ */}
           <div
-            className={`smooth-gulko-layer ${isCelebrating ? "celebrating-at-goal" : ""}`}
+            className="smooth-gulko-layer"
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
@@ -587,7 +587,11 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
               zIndex: 30
             }}
           >
-            <Gulko variant={isCelebrating ? "wave" : "default"} className="clean-gulko-element" />
+            <Gulko
+              animated={!isCelebrating}
+              celebrating={isCelebrating}
+              className="maze-gulko-mascot"
+            />
           </div>
         </div>
 
@@ -595,7 +599,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           <div className="milestone-modal-backdrop">
             <div className="milestone-modal-card">
               <div className="milestone-mascot-wrap">
-                <Gulko variant="wave" className="clean-gulko-element" />
+                <Gulko celebrating={true} className="modal-gulko-mascot" />
               </div>
               <h3>Paráda!</h3>
               <p>{milestoneMessage}</p>
@@ -612,8 +616,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           </div>
         )}
 
-        <div className={`gulko-bottom-mascot ${isCelebrating ? "wave-jump" : "float"}`}>
-          <Gulko variant={isCelebrating ? "wave" : "default"} className="clean-gulko-element" />
+        <div className="gulko-bottom-mascot">
+          <Gulko animated={true} celebrating={isCelebrating} className="bottom-gulko-mascot" />
         </div>
       </main>
 
@@ -805,14 +809,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           will-change: transform;
         }
 
-        :global(.clean-gulko-element) {
+        :global(.maze-gulko-mascot) {
           width: 100%;
           height: 100%;
-          object-fit: contain;
-        }
-
-        .smooth-gulko-layer.celebrating-at-goal {
-          animation: victoryGoalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate !important;
         }
 
         .milestone-modal-backdrop {
@@ -845,7 +844,11 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           width: 90px;
           height: 90px;
           margin: 0 auto 12px;
-          animation: floatY 2.5s ease-in-out infinite;
+        }
+
+        :global(.modal-gulko-mascot) {
+          width: 100%;
+          height: 100%;
         }
 
         .milestone-modal-card h3 {
@@ -890,12 +893,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           z-index: 20;
         }
 
-        .gulko-bottom-mascot.float {
-          animation: floatY 3s ease-in-out infinite;
-        }
-
-        .gulko-bottom-mascot.wave-jump {
-          animation: victoryGoalBounce 0.4s ease-in-out infinite alternate;
+        :global(.bottom-gulko-mascot) {
+          width: 100%;
+          height: 100%;
         }
 
         @keyframes floatPikto {
@@ -906,20 +906,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         @keyframes glowCoinPulse {
           0% { transform: scale(0.95); }
           100% { transform: scale(1.12); }
-        }
-
-        @keyframes victoryGoalBounce {
-          0% {
-            transform: scale(1) translateY(0);
-          }
-          100% {
-            transform: scale(1.35) translateY(-12px);
-          }
-        }
-
-        @keyframes floatY {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
         }
 
         @keyframes fadeIn {
