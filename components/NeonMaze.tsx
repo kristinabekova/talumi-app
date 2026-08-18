@@ -297,7 +297,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     if (dc === -1 && cell.left) return;
     if (dc === 1 && cell.right) return;
 
-    // Aktualizácia pozície pre pohyb
     gridPosRef.current = { r: targetR, c: targetC };
     targetPosRef.current = { x: targetC, y: targetR };
 
@@ -315,7 +314,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
-    // DOSIAHNUTIE CIEĽA: Zablokujeme ovládanie, Guľko zostane priamo na minci v cieli
+    // DOSIAHNUTIE CIEĽA: Oslavuje jedine Guľko v bludisku na minci
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLockedRef.current) {
         isLockedRef.current = true;
@@ -578,7 +577,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO: animated={false} pre bleskové ovládanie a plynulý pohyb po bunkách */}
+          {/* GUĽKO AKO HRÁČ: Iba on sa teší priamo na minci */}
           <div
             className="smooth-gulko-layer"
             style={{
@@ -616,10 +615,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
         )}
-
-        <div className="gulko-bottom-mascot">
-          <Gulko animated={true} celebrating={isCelebrating} className="bottom-gulko-mascot" />
-        </div>
       </main>
 
       <style jsx>{`
@@ -885,21 +880,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         }
         .milestone-btn:hover {
           transform: scale(1.04);
-        }
-
-        .gulko-bottom-mascot {
-          position: absolute;
-          bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
-          right: 12px;
-          width: 80px;
-          height: 80px;
-          pointer-events: none;
-          z-index: 20;
-        }
-
-        :global(.bottom-gulko-mascot) {
-          width: 100%;
-          height: 100%;
         }
 
         @keyframes floatPikto {
