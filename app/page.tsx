@@ -6,8 +6,9 @@ import { MeteorGame } from "./talumi/MeteorGame";
 import { Gulko } from "./talumi/Gulko";
 import SudokuApp from "./sudoku/SudokuApp";
 import NeonBubbles from "../components/NeonBubbles";
+import NeonMaze from "../components/NeonMaze";
 
-type AppView = "zones" | "games" | "meteor" | "snake" | "bubbles" | "chill" | "sudoku";
+type AppView = "zones" | "games" | "meteor" | "snake" | "bubbles" | "chill" | "sudoku" | "maze";
 
 function DecorativePictograms({ view }: { view: AppView }) {
   const icons = ["spark", "ring", "eye", "puzzle", "star"];
@@ -132,7 +133,15 @@ function GamesScreen({
   );
 }
 
-function ChillScreen({ onBack, onSudoku }: { onBack: () => void; onSudoku: () => void }) {
+function ChillScreen({
+  onBack,
+  onSudoku,
+  onMaze,
+}: {
+  onBack: () => void;
+  onSudoku: () => void;
+  onMaze: () => void;
+}) {
   return (
     <main className="games-screen chill-games">
       <header className="zone-top">
@@ -160,6 +169,17 @@ function ChillScreen({ onBack, onSudoku }: { onBack: () => void; onSudoku: () =>
             </span>
             <img className="card-crystal-art" src="/talumi-crystal-grid-visual.png" alt="" aria-hidden="true" />
           </button>
+
+          <button className="crystal-game-card maze-card" onClick={onMaze} aria-label="Hrať Svetelné labyrinty">
+            <span className="crystal-copy">
+              <small>Bludiská</small>
+              <strong>
+                Svetelné<br />labyrinty
+              </strong>
+              <em>Nájdi správnu cestu</em>
+            </span>
+            <img className="card-crystal-art" src="/talumi-maze-card.png" alt="Svetelné labyrinty" />
+          </button>
         </div>
       </section>
     </main>
@@ -174,6 +194,7 @@ export default function Home() {
   else if (view === "snake") content = <SnakeGame onBack={() => setView("games")} />;
   else if (view === "bubbles") content = <NeonBubbles onBack={() => setView("games")} />;
   else if (view === "sudoku") content = <SudokuApp onBack={() => setView("chill")} />;
+  else if (view === "maze") content = <NeonMaze onBack={() => setView("chill")} />;
   else if (view === "games")
     content = (
       <GamesScreen
@@ -183,7 +204,14 @@ export default function Home() {
         onBubbles={() => setView("bubbles")}
       />
     );
-  else if (view === "chill") content = <ChillScreen onBack={() => setView("zones")} onSudoku={() => setView("sudoku")} />;
+  else if (view === "chill")
+    content = (
+      <ChillScreen
+        onBack={() => setView("zones")}
+        onSudoku={() => setView("sudoku")}
+        onMaze={() => setView("maze")}
+      />
+    );
   else content = <ZoneScreen onGaming={() => setView("games")} onChill={() => setView("chill")} />;
 
   return (
