@@ -29,29 +29,31 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   const [maze, setMaze] = useState<Cell[][]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [isGateOpen, setIsGateOpen] = useState(true);
-  const [isLevelCompleted, setIsLevelCompleted] = useState(false);
+  const [isCelebrating, setIsCelebrating] = useState(false);
   const [milestoneMessage, setMilestoneMessage] = useState<string | null>(null);
 
-  const [gulkoPos, setGulkoPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const currentPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const targetPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const gridPosRef = useRef<{ r: number; c: number }>({ r: 0, c: 0 });
+  // Pozícia Guľka v mriežke
+  const [currentGrid, setCurrentGrid] = useState<{ r: number; c: number }>({ r: 0, c: 0 });
+  const [renderCoords, setRenderCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
+  const currentCoordsRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const targetCoordsRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const currentGridRef = useRef<{ r: number; c: number }>({ r: 0, c: 0 });
+  const isCelebratingRef = useRef(false);
   const mazeRef = useRef<Cell[][]>([]);
   const itemsRef = useRef<Item[]>([]);
   const isGateOpenRef = useRef(true);
-  const isLockedRef = useRef(false);
   const animFrameRef = useRef<number | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isPointerActiveRef = useRef(false);
+  const isPointerDownRef = useRef(false);
 
   const allowedCollectables = [
     "clover.png",
     "cross_x.png",
     "face_funny.png",
     "puzzle.png",
-    "star_hollow.png",
+    "star_hollow.png"
   ];
 
   const playSound = (type: "pickup" | "unlock" | "win" | "milestone") => {
@@ -171,8 +173,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     return grid;
   };
 
-  const startLevel = (nextLvl: number) => {
-    const currentSize = 6 + Math.floor((nextLvl - 1) / 5);
+  const setupLevel = (lvl: number) => {
+    const currentSize = 6 + Math.floor((lvl - 1) / 5);
     const cappedSize = Math.min(currentSize, 8);
     setGridSize(cappedSize);
 
@@ -180,13 +182,15 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     mazeRef.current = newMaze;
     setMaze(newMaze);
 
-    gridPosRef.current = { r: 0, c: 0 };
-    currentPosRef.current = { x: 0, y: 0 };
-    targetPosRef.current = { x: 0, y: 0 };
-    setGulkoPos({ x: 0, y: 0 });
+    currentGridRef.current = { r: 0, c: 0 };
+    setCurrentGrid({ r: 0, c: 0 });
 
-    isLockedRef.current = false;
-    setIsLevelCompleted(false);
+    currentCoordsRef.current = { x: 0, y: 0 };
+    targetCoordsRef.current = { x: 0, y: 0 };
+    setRenderCoords({ x: 0, y: 0 });
+
+    isCelebratingRef.current = false;
+    setIsCelebrating(false);
 
     const hasItems = Math.random() < 0.3;
     let newItems: Item[] = [];
@@ -211,7 +215,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             r: rr,
             c: cc,
             collected: false,
-            iconFile: shuffledIcons[newItems.length % shuffledIcons.length],
+            iconFile: shuffledIcons[newItems.length % shuffledIcons.length]
           });
         }
       }
@@ -227,13 +231,14 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   };
 
   useEffect(() => {
-    startLevel(level);
+    setupLevel(level);
   }, [level]);
 
+  // Plynulý rendering loop
   useEffect(() => {
-    const renderLoop = () => {
-      const cur = currentPosRef.current;
-      const target = targetPosRef.current;
+    const loop = () => {
+      const cur = currentCoordsRef.current;
+      const target = targetCoordsRef.current;
 
       const dx = target.x - cur.x;
       const dy = target.y - cur.y;
@@ -246,38 +251,39 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         cur.y = target.y;
       }
 
-      setGulkoPos({ x: cur.x, y: cur.y });
-      animFrameRef.current = requestAnimationFrame(renderLoop);
+      setRenderCoords({ x: cur.x, y: cur.y });
+      animFrameRef.current = requestAnimationFrame(loop);
     };
 
-    animFrameRef.current = requestAnimationFrame(renderLoop);
+    animFrameRef.current = requestAnimationFrame(loop);
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
   }, []);
 
-  const handleLevelFinished = (currentCompletedLevel: number) => {
-    const nextLevel = currentCompletedLevel + 1;
-    if (currentCompletedLevel % 5 === 0) {
+  const completeLevelAndAdvance = (finishedLevel: number) => {
+    const nextLevel = finishedLevel + 1;
+    if (finishedLevel % 5 === 0) {
       playSound("milestone");
-      if (currentCompletedLevel === 5) {
+      if (finishedLevel === 5) {
         setMilestoneMessage("Si super! Máš úspešne zvládnutých prvých 5 levelov!");
-      } else if (currentCompletedLevel === 10) {
+      } else if (finishedLevel === 10) {
         setMilestoneMessage("Už máš 10 levelov! Ide ti to fantasticky!");
-      } else if (currentCompletedLevel === 15) {
+      } else if (finishedLevel === 15) {
         setMilestoneMessage("Neuveriteľné! Už máš 15 levelov, si naozaj top!");
       } else {
-        setMilestoneMessage(`Skvelá práca! Už máš dokončených ${currentCompletedLevel} levelov!`);
+        setMilestoneMessage(`Skvelá práca! Už máš dokončených ${finishedLevel} levelov!`);
       }
     } else {
       setLevel(nextLevel);
     }
   };
 
-  const tryMoveTo = (targetR: number, targetC: number) => {
-    if (isLockedRef.current || milestoneMessage) return;
-    const curR = gridPosRef.current.r;
-    const curC = gridPosRef.current.c;
+  const handleStep = (targetR: number, targetC: number) => {
+    if (isCelebratingRef.current || milestoneMessage) return;
+
+    const curR = currentGridRef.current.r;
+    const curC = currentGridRef.current.c;
 
     if (targetR < 0 || targetR >= gridSize || targetC < 0 || targetC >= gridSize) return;
     if (targetR === curR && targetC === curC) return;
@@ -287,18 +293,20 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
 
     if (Math.abs(dr) + Math.abs(dc) !== 1) return;
 
-    const currentCell = mazeRef.current[curR]?.[curC];
-    if (!currentCell) return;
+    const cell = mazeRef.current[curR]?.[curC];
+    if (!cell) return;
 
-    if (dr === -1 && currentCell.top) return;
-    if (dr === 1 && currentCell.bottom) return;
-    if (dc === -1 && currentCell.left) return;
-    if (dc === 1 && currentCell.right) return;
+    if (dr === -1 && cell.top) return;
+    if (dr === 1 && cell.bottom) return;
+    if (dc === -1 && cell.left) return;
+    if (dc === 1 && cell.right) return;
 
-    // Presun
-    gridPosRef.current = { r: targetR, c: targetC };
-    targetPosRef.current = { x: targetC, y: targetR };
+    // Presun povolený
+    currentGridRef.current = { r: targetR, c: targetC };
+    setCurrentGrid({ r: targetR, c: targetC });
+    targetCoordsRef.current = { x: targetC, y: targetR };
 
+    // Zber piktogramu
     const items = itemsRef.current;
     const foundIdx = items.findIndex((it) => it.r === targetR && it.c === targetC && !it.collected);
     if (foundIdx !== -1) {
@@ -313,26 +321,28 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
-    // DOSIAHNUTIE CIEĽA: Zablokujeme pohyb a spustíme 1.4s oslavu v cieli
+    // VSTUP DO CIEĽA
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
-      if (isGateOpenRef.current && !isLockedRef.current) {
-        isLockedRef.current = true;
-        setIsLevelCompleted(true);
+      if (isGateOpenRef.current && !isCelebratingRef.current) {
+        isCelebratingRef.current = true;
+        setIsCelebrating(true);
         playSound("win");
 
-        // Zafixujeme pozíciu v cieli
-        targetPosRef.current = { x: targetC, y: targetR };
+        // Guľko sa presne vycentruje na cieľ
+        targetCoordsRef.current = { x: targetC, y: targetR };
+        currentCoordsRef.current = { x: targetC, y: targetR };
+        setRenderCoords({ x: targetC, y: targetR });
 
         const currentLvl = level;
         setTimeout(() => {
-          handleLevelFinished(currentLvl);
-        }, 1400);
+          completeLevelAndAdvance(currentLvl);
+        }, 1300);
       }
     }
   };
 
   const handlePointerInteraction = (clientX: number, clientY: number) => {
-    if (isLockedRef.current || milestoneMessage) return;
+    if (isCelebratingRef.current || milestoneMessage) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -348,21 +358,21 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     const touchC = Math.floor((x - padding) / cellW);
     const touchR = Math.floor((y - padding) / cellH);
 
-    const curR = gridPosRef.current.r;
-    const curC = gridPosRef.current.c;
+    const curR = currentGridRef.current.r;
+    const curC = currentGridRef.current.c;
 
     if (Math.abs(touchR - curR) + Math.abs(touchC - curC) === 1) {
-      tryMoveTo(touchR, touchC);
+      handleStep(touchR, touchC);
     } else {
       const dx = (x - padding) / cellW - (curC + 0.5);
       const dy = (y - padding) / cellH - (curR + 0.5);
 
       if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx > 0.4) tryMoveTo(curR, curC + 1);
-        else if (dx < -0.4) tryMoveTo(curR, curC - 1);
+        if (dx > 0.4) handleStep(curR, curC + 1);
+        else if (dx < -0.4) handleStep(curR, curC - 1);
       } else {
-        if (dy > 0.4) tryMoveTo(curR + 1, curC);
-        else if (dy < -0.4) tryMoveTo(curR - 1, curC);
+        if (dy > 0.4) handleStep(curR + 1, curC);
+        else if (dy < -0.4) handleStep(curR - 1, curC);
       }
     }
   };
@@ -518,19 +528,19 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             height={440}
             className="maze-canvas-element"
             onPointerDown={(e) => {
-              isPointerActiveRef.current = true;
+              isPointerDownRef.current = true;
               handlePointerInteraction(e.clientX, e.clientY);
             }}
             onPointerMove={(e) => {
-              if (isPointerActiveRef.current) {
+              if (isPointerDownRef.current) {
                 handlePointerInteraction(e.clientX, e.clientY);
               }
             }}
             onPointerUp={() => {
-              isPointerActiveRef.current = false;
+              isPointerDownRef.current = false;
             }}
             onPointerCancel={() => {
-              isPointerActiveRef.current = false;
+              isPointerDownRef.current = false;
             }}
           />
 
@@ -543,7 +553,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
                 style={{
                   width: `calc((100% - 32px) / ${gridSize})`,
                   height: `calc((100% - 32px) / ${gridSize})`,
-                  transform: `translate3d(calc(16px + ${it.c * 100}%), calc(16px + ${it.r * 100}%), 0)`,
+                  transform: `translate3d(calc(16px + ${it.c * 100}%), calc(16px + ${it.r * 100}%), 0)`
                 }}
               >
                 <img
@@ -562,7 +572,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${(gridSize - 1) * 100}%), calc(16px + ${(gridSize - 1) * 100}%), 0)`,
-              zIndex: 5,
+              zIndex: 5
             }}
           >
             <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
@@ -575,23 +585,21 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO: V CIELI VIDITEĽNE PULZUJE A SKÁČE 1.4s NAD MINCOU */}
+          {/* GUĽKO: ČISTÁ GRAFIKA BEZ SIVÝCH TIEŇOV */}
           <div
-            className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-at-goal" : ""}`}
+            className={`smooth-gulko-layer ${isCelebrating ? "celebrating-at-goal" : ""}`}
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
-              transform: `translate3d(calc(16px + ${gulkoPos.x * 100}%), calc(16px + ${gulkoPos.y * 100}%), 0)`,
-              zIndex: 35,
+              transform: `translate3d(calc(16px + ${renderCoords.x * 100}%), calc(16px + ${renderCoords.y * 100}%), 0)`,
+              zIndex: 30
             }}
           >
-            <div className="clean-gulko-sphere">
-              <img
-                src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
-                alt="Guľko"
-                className="sphere-img"
-              />
-            </div>
+            <img
+              src={isCelebrating ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
+              alt="Guľko"
+              className="pure-clean-gulko"
+            />
           </div>
         </div>
 
@@ -599,9 +607,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           <div className="milestone-modal-backdrop">
             <div className="milestone-modal-card">
               <div className="milestone-mascot-wrap">
-                <div className="clean-gulko-sphere">
-                  <img src="/talumi-gulko-wave.png" alt="Guľko sa teší" className="sphere-img" />
-                </div>
+                <img src="/talumi-gulko-wave.png" alt="Guľko sa teší" className="pure-clean-gulko" />
               </div>
               <h3>Paráda!</h3>
               <p>{milestoneMessage}</p>
@@ -618,14 +624,12 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           </div>
         )}
 
-        <div className={`gulko-bottom-mascot ${isLevelCompleted ? "wave-jump" : "float"}`}>
-          <div className="clean-gulko-sphere">
-            <img
-              src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
-              alt="Guľko maskot"
-              className="sphere-img"
-            />
-          </div>
+        <div className={`gulko-bottom-mascot ${isCelebrating ? "wave-jump" : "float"}`}>
+          <img
+            src={isCelebrating ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
+            alt="Guľko maskot"
+            className="pure-clean-gulko"
+          />
         </div>
       </main>
 
@@ -762,7 +766,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           width: 66%;
           height: 66%;
           object-fit: contain;
-          filter: drop-shadow(0 6px 12px rgba(0, 229, 209, 0.45));
           animation: floatPikto 1.8s ease-in-out infinite alternate;
         }
 
@@ -814,37 +817,23 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 4px;
+          padding: 2px;
           will-change: transform;
         }
 
-        .clean-gulko-sphere {
+        /* ČISTÝ GUĽKO */
+        .pure-clean-gulko {
           width: 100%;
           height: 100%;
-          border-radius: 50% !important;
-          -webkit-border-radius: 50% !important;
-          clip-path: circle(50% at 50% 50%) !important;
-          -webkit-clip-path: circle(50% at 50% 50%) !important;
+          object-fit: contain;
           background: transparent !important;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden !important;
-          filter: drop-shadow(0 4px 10px rgba(51, 0, 91, 0.25));
-          -webkit-filter: drop-shadow(0 4px 10px rgba(51, 0, 91, 0.25));
+          border: none !important;
+          box-shadow: none !important;
         }
 
-        .sphere-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover !important;
-          border-radius: 50% !important;
-          display: block;
-        }
-
-        /* OSLAVNÉ PULZOVANIE A VÝSKOK V CIELI */
+        /* OSLAVNÉ PULZOVANIE PRIAMO NA MINCI */
         .smooth-gulko-layer.celebrating-at-goal {
-          animation: victoryGoalPulse 0.45s ease-in-out infinite alternate !important;
+          animation: victoryGoalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate !important;
         }
 
         .milestone-modal-backdrop {
@@ -878,13 +867,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           height: 90px;
           margin: 0 auto 12px;
           animation: floatY 2.5s ease-in-out infinite;
-        }
-
-        .milestone-gulko-img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          border-radius: 50%;
         }
 
         .milestone-modal-card h3 {
@@ -934,7 +916,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         }
 
         .gulko-bottom-mascot.wave-jump {
-          animation: victoryGoalPulse 0.4s ease-in-out infinite alternate;
+          animation: victoryGoalBounce 0.4s ease-in-out infinite alternate;
         }
 
         @keyframes floatPikto {
@@ -947,18 +929,13 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           100% { transform: scale(1.12); }
         }
 
-        @keyframes victoryGoalPulse {
+        /* OSLAVNÝ VÝSKOK V CIELI */
+        @keyframes victoryGoalBounce {
           0% {
             transform: scale(1) translateY(0);
-            filter: drop-shadow(0 4px 10px rgba(51, 0, 91, 0.3));
-          }
-          50% {
-            transform: scale(1.35) translateY(-14px) rotate(8deg);
-            filter: drop-shadow(0 0 18px rgba(0, 229, 209, 0.95));
           }
           100% {
-            transform: scale(1.42) translateY(-18px) rotate(-8deg);
-            filter: drop-shadow(0 0 26px rgba(255, 0, 238, 0.95));
+            transform: scale(1.35) translateY(-12px);
           }
         }
 
