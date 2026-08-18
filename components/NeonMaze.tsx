@@ -51,8 +51,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     "cross_x.png",
     "face_funny.png",
     "puzzle.png",
-    "star_hollow.png",
-  ];[cite: 1]
+    "star_hollow.png"
+  ];
 
   const playSound = (type: "pickup" | "unlock" | "win" | "milestone") => {
     try {
@@ -211,7 +211,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             r: rr,
             c: cc,
             collected: false,
-            iconFile: shuffledIcons[newItems.length % shuffledIcons.length],
+            iconFile: shuffledIcons[newItems.length % shuffledIcons.length]
           });
         }
       }
@@ -312,19 +312,16 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
-    // DOSIAHNUTIE CIEĽA: Guľko sa presunie presne do cieľa a 1.2s tam viditeľne oslavuje
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLevelCompletedRef.current) {
         playSound("win");
         isLevelCompletedRef.current = true;
         setIsLevelCompleted(true);
 
-        // Zafixovanie pozície priamo na cieľové pole
         targetPosRef.current = { x: targetC, y: targetR };
         currentPosRef.current = { x: targetC, y: targetR };
         setGulkoPos({ x: targetC, y: targetR });
 
-        // Dostatok času (1200 ms), aby bolo vidieť celé oslavné pulzovanie na minci
         setTimeout(() => {
           handleLevelFinished();
         }, 1200);
@@ -544,7 +541,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
                 style={{
                   width: `calc((100% - 32px) / ${gridSize})`,
                   height: `calc((100% - 32px) / ${gridSize})`,
-                  transform: `translate3d(calc(16px + ${it.c * 100}%), calc(16px + ${it.r * 100}%), 0)`,
+                  transform: `translate3d(calc(16px + ${it.c * 100}%), calc(16px + ${it.r * 100}%), 0)`
                 }}
               >
                 <img
@@ -556,19 +553,18 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             );
           })}
 
-          {/* CIEĽOVÁ MINCA COIN SPARK */}
           <div
             className="board-overlay-item"
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${(gridSize - 1) * 100}%), calc(16px + ${(gridSize - 1) * 100}%), 0)`,
-              zIndex: 5,
+              zIndex: 5
             }}
           >
             <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
               <img
-                src="/talumi-decor/coin_spark.png"[cite: 1]
+                src="/talumi-decor/coin_spark.png"
                 alt="Cieľová minca"
                 className="coin-spark-img"
               />
@@ -576,14 +572,13 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO: V CIELI VIDITEĽNE PULZUJE A SKÁČE NAD MINCOU */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-at-goal" : ""}`}
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${gulkoPos.x * 100}%), calc(16px + ${gulkoPos.y * 100}%), 0)`,
-              zIndex: 30,
+              zIndex: 30
             }}
           >
             <div className="clean-gulko-sphere">
@@ -843,9 +838,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: block;
         }
 
-        /* OSLAVA NA POLÍČKU CIEĽA */
         .smooth-gulko-layer.celebrating-at-goal {
-          animation: victoryGoalPulse 0.4s ease-in-out infinite alternate !important;
+          animation: victoryGoalPulse 0.42s ease-in-out infinite alternate !important;
         }
 
         .milestone-modal-backdrop {
@@ -941,7 +935,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           100% { transform: scale(1.12); }
         }
 
-        /* VÝRAZNÝ POSKOK A PULZ V CIELI */
         @keyframes victoryGoalPulse {
           0% {
             transform: scale(1) translateY(0);
