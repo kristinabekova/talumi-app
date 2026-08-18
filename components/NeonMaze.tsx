@@ -40,7 +40,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   const mazeRef = useRef<Cell[][]>([]);
   const itemsRef = useRef<Item[]>([]);
   const isGateOpenRef = useRef(true);
-  const isLevelCompletedRef = useRef(false);
+  const isLockedRef = useRef(false);
   const animFrameRef = useRef<number | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,7 +51,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     "cross_x.png",
     "face_funny.png",
     "puzzle.png",
-    "star_hollow.png"
+    "star_hollow.png",
   ];
 
   const playSound = (type: "pickup" | "unlock" | "win" | "milestone") => {
@@ -185,7 +185,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     targetPosRef.current = { x: 0, y: 0 };
     setGulkoPos({ x: 0, y: 0 });
 
-    isLevelCompletedRef.current = false;
+    isLockedRef.current = false;
     setIsLevelCompleted(false);
 
     const hasItems = Math.random() < 0.3;
@@ -211,7 +211,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             r: rr,
             c: cc,
             collected: false,
-            iconFile: shuffledIcons[newItems.length % shuffledIcons.length]
+            iconFile: shuffledIcons[newItems.length % shuffledIcons.length],
           });
         }
       }
@@ -239,8 +239,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       const dy = target.y - cur.y;
 
       if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) {
-        cur.x += dx * 0.26;
-        cur.y += dy * 0.26;
+        cur.x += dx * 0.28;
+        cur.y += dy * 0.28;
       } else {
         cur.x = target.x;
         cur.y = target.y;
@@ -256,18 +256,18 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     };
   }, []);
 
-  const handleLevelFinished = () => {
-    const nextLevel = level + 1;
-    if (level % 5 === 0) {
+  const handleLevelFinished = (currentCompletedLevel: number) => {
+    const nextLevel = currentCompletedLevel + 1;
+    if (currentCompletedLevel % 5 === 0) {
       playSound("milestone");
-      if (level === 5) {
+      if (currentCompletedLevel === 5) {
         setMilestoneMessage("Si super! Máš úspešne zvládnutých prvých 5 levelov!");
-      } else if (level === 10) {
+      } else if (currentCompletedLevel === 10) {
         setMilestoneMessage("Už máš 10 levelov! Ide ti to fantasticky!");
-      } else if (level === 15) {
+      } else if (currentCompletedLevel === 15) {
         setMilestoneMessage("Neuveriteľné! Už máš 15 levelov, si naozaj top!");
       } else {
-        setMilestoneMessage(`Skvelá práca! Už máš dokončených ${level} levelov!`);
+        setMilestoneMessage(`Skvelá práca! Už máš dokončených ${currentCompletedLevel} levelov!`);
       }
     } else {
       setLevel(nextLevel);
@@ -275,7 +275,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   };
 
   const tryMoveTo = (targetR: number, targetC: number) => {
-    if (isLevelCompletedRef.current || milestoneMessage) return;
+    if (isLockedRef.current || milestoneMessage) return;
     const curR = gridPosRef.current.r;
     const curC = gridPosRef.current.c;
 
@@ -295,6 +295,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     if (dc === -1 && currentCell.left) return;
     if (dc === 1 && currentCell.right) return;
 
+    // Presun
     gridPosRef.current = { r: targetR, c: targetC };
     targetPosRef.current = { x: targetC, y: targetR };
 
@@ -312,25 +313,26 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
+    // DOSIAHNUTIE CIEĽA: Zablokujeme pohyb a spustíme 1.4s oslavu v cieli
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
-      if (isGateOpenRef.current && !isLevelCompletedRef.current) {
-        playSound("win");
-        isLevelCompletedRef.current = true;
+      if (isGateOpenRef.current && !isLockedRef.current) {
+        isLockedRef.current = true;
         setIsLevelCompleted(true);
+        playSound("win");
 
+        // Zafixujeme pozíciu v cieli
         targetPosRef.current = { x: targetC, y: targetR };
-        currentPosRef.current = { x: targetC, y: targetR };
-        setGulkoPos({ x: targetC, y: targetR });
 
+        const currentLvl = level;
         setTimeout(() => {
-          handleLevelFinished();
-        }, 1200);
+          handleLevelFinished(currentLvl);
+        }, 1400);
       }
     }
   };
 
   const handlePointerInteraction = (clientX: number, clientY: number) => {
-    if (isLevelCompletedRef.current || milestoneMessage) return;
+    if (isLockedRef.current || milestoneMessage) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -541,7 +543,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
                 style={{
                   width: `calc((100% - 32px) / ${gridSize})`,
                   height: `calc((100% - 32px) / ${gridSize})`,
-                  transform: `translate3d(calc(16px + ${it.c * 100}%), calc(16px + ${it.r * 100}%), 0)`
+                  transform: `translate3d(calc(16px + ${it.c * 100}%), calc(16px + ${it.r * 100}%), 0)`,
                 }}
               >
                 <img
@@ -553,13 +555,14 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             );
           })}
 
+          {/* CIEĽOVÁ MINCA COIN SPARK */}
           <div
             className="board-overlay-item"
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${(gridSize - 1) * 100}%), calc(16px + ${(gridSize - 1) * 100}%), 0)`,
-              zIndex: 5
+              zIndex: 5,
             }}
           >
             <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
@@ -572,13 +575,14 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
+          {/* GUĽKO: V CIELI VIDITEĽNE PULZUJE A SKÁČE 1.4s NAD MINCOU */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-at-goal" : ""}`}
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${gulkoPos.x * 100}%), calc(16px + ${gulkoPos.y * 100}%), 0)`,
-              zIndex: 30
+              zIndex: 35,
             }}
           >
             <div className="clean-gulko-sphere">
@@ -838,8 +842,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: block;
         }
 
+        /* OSLAVNÉ PULZOVANIE A VÝSKOK V CIELI */
         .smooth-gulko-layer.celebrating-at-goal {
-          animation: victoryGoalPulse 0.42s ease-in-out infinite alternate !important;
+          animation: victoryGoalPulse 0.45s ease-in-out infinite alternate !important;
         }
 
         .milestone-modal-backdrop {
@@ -873,6 +878,13 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           height: 90px;
           margin: 0 auto 12px;
           animation: floatY 2.5s ease-in-out infinite;
+        }
+
+        .milestone-gulko-img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          border-radius: 50%;
         }
 
         .milestone-modal-card h3 {
