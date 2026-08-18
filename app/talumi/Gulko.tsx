@@ -1,42 +1,46 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 interface GulkoProps {
   className?: string;
   variant?: "default" | "wave" | "blink";
+  autoBlink?: boolean;
 }
 
-export function Gulko({ className = "", variant = "default" }: GulkoProps) {
-  const file =
-    variant === "wave"
-      ? "/talumi-gulko-wave.png"
-      : variant === "blink"
-      ? "/talumi-gulko-blink.png"
-      : "/talumi-gulko-default.png";
+export function Gulko({ className = "", variant = "default", autoBlink = true }: GulkoProps) {
+  const [isBlinking, setIsBlinking] = useState(false);
+
+  useEffect(() => {
+    if (!autoBlink || variant !== "default") return;
+
+    const blinkInterval = setInterval(() => {
+      setIsBlinking(true);
+      setTimeout(() => {
+        setIsBlinking(false);
+      }, 180);
+    }, 3200);
+
+    return () => clearInterval(blinkInterval);
+  }, [autoBlink, variant]);
+
+  const getImageSrc = () => {
+    if (variant === "wave") return "/talumi-gulko-wave.png";
+    if (variant === "blink" || isBlinking) return "/talumi-gulko-blink.png";
+    return "/talumi-gulko-default.png";
+  };
 
   return (
-    <div className={`gulko-wrapper ${className}`}>
-      <img src={file} alt="Guľko" className="gulko-img" />
-      <style jsx>{`
-        .gulko-wrapper {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          overflow: hidden;
-          background: transparent;
-        }
-        .gulko-img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          display: block;
-          border-radius: 50%;
-          filter: drop-shadow(0 6px 14px rgba(51, 0, 91, 0.22));
-          -webkit-filter: drop-shadow(0 6px 14px rgba(51, 0, 91, 0.22));
-        }
-      `}</style>
-    </div>
+    <img
+      src={getImageSrc()}
+      alt="Guľko"
+      className={className}
+      style={{
+        display: "block",
+        objectFit: "contain",
+        userSelect: "none",
+        pointerEvents: "none"
+      }}
+    />
   );
 }
