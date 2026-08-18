@@ -297,6 +297,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     if (dc === -1 && cell.left) return;
     if (dc === 1 && cell.right) return;
 
+    // Aktualizácia pozície pre pohyb
     gridPosRef.current = { r: targetR, c: targetC };
     targetPosRef.current = { x: targetC, y: targetR };
 
@@ -314,7 +315,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
-    // DOSIAHNUTIE CIEĽA: Zablokovanie a oslava v cieli na minci
+    // DOSIAHNUTIE CIEĽA: Zablokujeme ovládanie, Guľko zostane priamo na minci v cieli
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLockedRef.current) {
         isLockedRef.current = true;
@@ -343,7 +344,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
 
     const padding = (14 / 440) * rect.width;
     const innerW = rect.width - padding * 2;
-    const innerH = height - padding * 2;
+    const innerH = rect.height - padding * 2;
     const cellW = innerW / gridSize;
     const cellH = innerH / gridSize;
 
@@ -557,7 +558,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             );
           })}
 
-          {/* CIEĽOVÁ MINCA COIN SPARK */}
+          {/* CIEĽOVÁ MINCA */}
           <div
             className="board-overlay-item"
             style={{
@@ -577,7 +578,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO: ORIGINÁLNY ŽIVÝ KOMPONENT, KTORÝ PRIRODZENE LEVITUJE A ŽMURKÁ */}
+          {/* GUĽKO: animated={false} pre bleskové ovládanie a plynulý pohyb po bunkách */}
           <div
             className="smooth-gulko-layer"
             style={{
@@ -588,7 +589,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             }}
           >
             <Gulko
-              animated={!isCelebrating}
+              animated={false}
               celebrating={isCelebrating}
               className="maze-gulko-mascot"
             />
@@ -599,7 +600,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           <div className="milestone-modal-backdrop">
             <div className="milestone-modal-card">
               <div className="milestone-mascot-wrap">
-                <Gulko celebrating={true} className="modal-gulko-mascot" />
+                <Gulko animated={false} celebrating={true} className="modal-gulko-mascot" />
               </div>
               <h3>Paráda!</h3>
               <p>{milestoneMessage}</p>
@@ -812,6 +813,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         :global(.maze-gulko-mascot) {
           width: 100%;
           height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .milestone-modal-backdrop {
