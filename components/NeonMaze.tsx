@@ -52,7 +52,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     "face_funny.png",
     "puzzle.png",
     "star_hollow.png",
-  ];
+  ];[cite: 1]
 
   const playSound = (type: "pickup" | "unlock" | "win" | "milestone") => {
     try {
@@ -96,15 +96,15 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         osc1.frequency.exponentialRampToValueAtTime(1046.5, ctx.currentTime + 0.3);
         osc2.frequency.setValueAtTime(659.25, ctx.currentTime);
         osc2.frequency.exponentialRampToValueAtTime(1318.5, ctx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0.22, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
         osc1.connect(gain);
         osc2.connect(gain);
         gain.connect(ctx.destination);
         osc1.start();
         osc2.start();
-        osc1.stop(ctx.currentTime + 0.4);
-        osc2.stop(ctx.currentTime + 0.4);
+        osc1.stop(ctx.currentTime + 0.5);
+        osc2.stop(ctx.currentTime + 0.5);
       } else if (type === "milestone") {
         const notes = [523.25, 659.25, 783.99, 1046.5];
         notes.forEach((freq, idx) => {
@@ -312,20 +312,22 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
       }
     }
 
-    // Dosiahnutie cieľa: Guľko zostáva presne na políčku cieľa a teší sa
+    // Dosiahnutie cieľa: Guľko sa presne presunie do cieľovej bunky a spustí pulzovanie priamo v cieli
     if (targetR === gridSize - 1 && targetC === gridSize - 1) {
       if (isGateOpenRef.current && !isLevelCompletedRef.current) {
         playSound("win");
         isLevelCompletedRef.current = true;
         setIsLevelCompleted(true);
-        // Zafixujeme cieľovú pozíciu pre oslavu priamo na minci
+
+        // Okamžite zafixujeme cieľové súradnice
         targetPosRef.current = { x: targetC, y: targetR };
         currentPosRef.current = { x: targetC, y: targetR };
         setGulkoPos({ x: targetC, y: targetR });
 
+        // Dostatok času na animáciu pulzovania v cieli (900ms)
         setTimeout(() => {
           handleLevelFinished();
-        }, 750);
+        }, 900);
       }
     }
   };
@@ -554,17 +556,19 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             );
           })}
 
+          {/* CIEĽOVÁ MINCA COIN SPARK */}
           <div
             className="board-overlay-item"
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${(gridSize - 1) * 100}%), calc(16px + ${(gridSize - 1) * 100}%), 0)`,
+              zIndex: 6,
             }}
           >
             <div className={`coin-spark-goal ${isGateOpen ? "glowing" : "veiled"}`}>
               <img
-                src="/talumi-decor/coin_spark.png"
+                src="/talumi-decor/coin_spark.png"[cite: 1]
                 alt="Cieľová minca"
                 className="coin-spark-img"
               />
@@ -572,13 +576,14 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO: Čistý kruhový render bez akéhokoľvek štvorcového pozadia */}
+          {/* GUĽKO: V CIELI ZOSTÁVA NA CIEĽOVOM POLÍČKU A PULZUJE S OSLAVNÝM GESTOM */}
           <div
             className={`smooth-gulko-layer ${isLevelCompleted ? "celebrating-at-goal" : ""}`}
             style={{
               width: `calc((100% - 32px) / ${gridSize})`,
               height: `calc((100% - 32px) / ${gridSize})`,
               transform: `translate3d(calc(16px + ${gulkoPos.x * 100}%), calc(16px + ${gulkoPos.y * 100}%), 0)`,
+              zIndex: 25,
             }}
           >
             <div className="clean-gulko-sphere">
@@ -752,7 +757,6 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 5;
         }
 
         .exact-talumi-piktogram-img {
@@ -803,13 +807,11 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: none;
         }
 
-        /* DOKONALÉ KRUHOVÉ GUĽKO BEZ ŠTVORCA */
         .smooth-gulko-layer {
           position: absolute;
           top: 0;
           left: 0;
           pointer-events: none;
-          z-index: 10;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -841,9 +843,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           display: block;
         }
 
-        /* OSLAVA NA POLÍČKU CIEĽA */
+        /* OSLAVNÉ PULZOVANIE A VÝSKOK PRIAMO V BUNKE CIEĽA */
         .smooth-gulko-layer.celebrating-at-goal {
-          animation: victoryGoalBounce 0.36s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate;
+          animation: victoryGoalPulse 0.42s ease-in-out infinite alternate !important;
         }
 
         .milestone-modal-backdrop {
@@ -926,7 +928,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         }
 
         .gulko-bottom-mascot.wave-jump {
-          animation: victoryGoalBounce 0.4s ease-in-out infinite alternate;
+          animation: victoryGoalPulse 0.4s ease-in-out infinite alternate;
         }
 
         @keyframes floatPikto {
@@ -939,9 +941,11 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           100% { transform: scale(1.12); }
         }
 
-        @keyframes victoryGoalBounce {
-          0% { transform: scale(1) translateY(0); }
-          100% { transform: scale(1.22) translateY(-14px); }
+        /* PULZOVANIE A VÝSKOK V CIELI */
+        @keyframes victoryGoalPulse {
+          0% { transform: scale(1) translateY(0); filter: drop-shadow(0 4px 8px rgba(51, 0, 91, 0.3)); }
+          50% { transform: scale(1.28) translateY(-14px) rotate(8deg); filter: drop-shadow(0 0 16px rgba(0, 229, 209, 0.9)); }
+          100% { transform: scale(1.35) translateY(-18px) rotate(-8deg); filter: drop-shadow(0 0 24px rgba(255, 0, 238, 0.9)); }
         }
 
         @keyframes floatY {
