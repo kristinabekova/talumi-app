@@ -178,7 +178,7 @@ function ChillScreen({
               </strong>
               <em>Nájdi správnu cestu</em>
             </span>
-            <img className="card-crystal-art" src="/talumi-maze-card.png" alt="Svetelné labyrinty" />
+            <img className="card-crystal-art" src="/talumi-maze-card.jpeg" alt="Svetelné labyrinty" />
           </button>
         </div>
       </section>
