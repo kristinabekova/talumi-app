@@ -9,10 +9,11 @@ import NeonMaze from "../components/NeonMaze";
 import { AvatarSelect, type AvatarId } from "./talumi/AvatarSelect";
 import { Bunker } from "./talumi/Bunker";
 import { SkolskaCast } from "./talumi/SkolskaCast";
+import { MojSatnik } from "./talumi/MojSatnik";
 
 const AVATAR_STORAGE_KEY = "talumi_avatar";
 
-type AppView = "avatar" | "zones" | "games" | "meteor" | "snake" | "bubbles" | "chill" | "sudoku" | "maze" | "skola";
+type AppView = "avatar" | "zones" | "games" | "meteor" | "snake" | "bubbles" | "chill" | "sudoku" | "maze" | "skola" | "satnik";
 
 function DecorativePictograms({ view }: { view: AppView }) {
   const icons = ["spark", "ring", "eye", "puzzle", "star"];
@@ -174,6 +175,7 @@ export default function Home() {
   else if (view === "sudoku") content = <SudokuApp onBack={() => setView("chill")} />;
   else if (view === "maze") content = <NeonMaze onBack={() => setView("chill")} />;
   else if (view === "skola") content = <SkolskaCast onBack={() => setView("zones")} />;
+  else if (view === "satnik" && avatar) content = <MojSatnik avatar={avatar} onBack={() => setView("zones")} />;
   else if (view === "games")
     content = (
       <GamesScreen
@@ -198,6 +200,7 @@ export default function Home() {
         onGaming={() => setView("games")}
         onChill={() => setView("chill")}
         onSkola={() => setView("skola")}
+        onSatnik={() => setView("satnik")}
         onChangeAvatar={changeAvatar}
       />
     );

@@ -13,12 +13,14 @@ export function Bunker({
   onGaming,
   onChill,
   onSkola,
+  onSatnik,
   onChangeAvatar,
 }: {
   avatar: AvatarId;
   onGaming: () => void;
   onChill: () => void;
   onSkola: () => void;
+  onSatnik: () => void;
   onChangeAvatar: () => void;
 }) {
   return (
@@ -32,9 +34,7 @@ export function Bunker({
 
         <button className="bunker-hotspot hotspot-math" onClick={onGaming} aria-label="Matematické hry" />
 
-        <button className="bunker-hotspot hotspot-wardrobe" disabled aria-disabled="true" aria-label="Môj šatník – čoskoro">
-          <span className="soon-badge">čoskoro</span>
-        </button>
+        <button className="bunker-hotspot hotspot-wardrobe" onClick={onSatnik} aria-label="Môj šatník" />
 
         <button className="bunker-hotspot hotspot-back" onClick={onChangeAvatar} aria-label="Späť do sveta" />
       </div>

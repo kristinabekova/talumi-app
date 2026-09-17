@@ -194,10 +194,230 @@
   50% { transform: translateY(-10px); }
 }
 
+/* Môj šatník */
+.satnik-screen {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  overflow: hidden auto;
+  color: var(--bunker-ink);
+  padding: 18px 16px 60px;
+}
+.satnik-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 960px;
+  margin: 0 auto 18px;
+}
+.satnik-back {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(87, 230, 207, .5);
+  background: rgba(255, 255, 255, .82);
+  color: var(--bunker-ink);
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.satnik-heading {
+  flex: 1;
+}
+.satnik-heading h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 1000;
+}
+.satnik-heading p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: rgba(51, 18, 91, .68);
+}
+
+.satnik-body {
+  position: relative;
+  z-index: 2;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  gap: 16px;
+}
+.satnik-tabs {
+  flex: none;
+  width: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.satnik-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(51, 18, 91, .12);
+  background: rgba(255, 255, 255, .7);
+  color: var(--bunker-ink);
+  font-weight: 800;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.satnik-tab.active {
+  border-color: var(--bunker-turquoise);
+  background: rgba(87, 230, 207, .28);
+}
+
+.satnik-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.satnik-preview {
+  position: relative;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(87, 230, 207, .4);
+  min-height: 220px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 0 0;
+  overflow: hidden;
+}
+.satnik-preview-avatar {
+  width: 150px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 20px rgba(33, 82, 82, .22));
+}
+.satnik-preview-mascot {
+  width: 84px;
+}
+
+.satnik-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.satnik-section-head h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 1000;
+}
+.satnik-see-all {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--bunker-mint-deep);
+}
+
+.satnik-outfit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.outfit-card {
+  position: relative;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  height: 92px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px;
+}
+.outfit-card.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px var(--bunker-turquoise);
+}
+.outfit-label {
+  color: #fff;
+  font-weight: 900;
+  font-size: 11px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+.outfit-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--bunker-mint-deep);
+  font-size: 12px;
+  font-weight: 1000;
+  display: grid;
+  place-items: center;
+}
+
+.satnik-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.chip-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border-radius: 16px;
+  border: 1px dashed rgba(51, 18, 91, .25);
+  background: rgba(255, 255, 255, .6);
+  color: var(--bunker-ink);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: default;
+}
+.chip-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(167, 101, 245, .18);
+  color: var(--bunker-violet);
+  font-size: 14px;
+}
+.shoe-chip .chip-icon {
+  color: transparent;
+}
+.chip-quote {
+  grid-column: span 3;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--bunker-mint-deep);
+  padding: 10px;
+}
+
+.satnik-soon {
+  text-align: center;
+  padding: 40px 20px;
+  color: rgba(51, 18, 91, .55);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .satnik-body { flex-direction: column; }
+  .satnik-tabs { width: 100%; flex-direction: row; overflow-x: auto; }
+  .satnik-tab { flex: none; }
+}
+
 /* Pictogramy z pôvodného vizuálu sa do nového Bunkra nehodia (vlastné pozadie) */
 .talumi-pictograms--avatar,
 .talumi-pictograms--zones,
-.talumi-pictograms--skola {
+.talumi-pictograms--skola,
+.talumi-pictograms--satnik {
   display: none;
 }
 
