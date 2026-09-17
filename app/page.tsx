@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SnakeGame from "./snake/SnakeGame";
 import { MeteorGame } from "./talumi/MeteorGame";
-import { Gulko } from "./talumi/Gulko";
 import SudokuApp from "./sudoku/SudokuApp";
 import NeonBubbles from "../components/NeonBubbles";
 import NeonMaze from "../components/NeonMaze";
+import { AvatarSelect, type AvatarId } from "./talumi/AvatarSelect";
+import { Bunker } from "./talumi/Bunker";
+import { SkolskaCast } from "./talumi/SkolskaCast";
 
-type AppView = "zones" | "games" | "meteor" | "snake" | "bubbles" | "chill" | "sudoku" | "maze";
+const AVATAR_STORAGE_KEY = "talumi_avatar";
+
+type AppView = "avatar" | "zones" | "games" | "meteor" | "snake" | "bubbles" | "chill" | "sudoku" | "maze" | "skola";
 
 function DecorativePictograms({ view }: { view: AppView }) {
   const icons = ["spark", "ring", "eye", "puzzle", "star"];
@@ -23,54 +27,6 @@ function DecorativePictograms({ view }: { view: AppView }) {
         />
       ))}
     </div>
-  );
-}
-
-function ZoneScreen({ onGaming, onChill }: { onGaming: () => void; onChill: () => void }) {
-  return (
-    <main className="zone-screen">
-      <header className="zone-top">
-        <span aria-hidden="true" />
-        <h1>Vyber si zónu</h1>
-        <div className="zone-coins">
-          <span>C</span>
-          <b>120</b>
-        </div>
-      </header>
-      <section className="zone-content">
-        <h2>Kam chceš ísť?</h2>
-        <p>
-          Vyber si zónu a pokračuj
-          <br />v matematickom dobrodružstve.
-        </p>
-        <button className="zone-card gaming" onClick={onGaming}>
-          <div>
-            <strong>Gaming zóna</strong>
-            <span>Hraj sa s číslami</span>
-          </div>
-        </button>
-        <button className="zone-card chill" onClick={onChill}>
-          <div>
-            <strong>Chill zóna</strong>
-            <span>
-              Oddýchni si<br />s matematikou
-            </span>
-          </div>
-        </button>
-        <Gulko className="zone-mascot" />
-      </section>
-      <nav className="bottom-nav" aria-label="Hlavná navigácia">
-        <button className="active" aria-label="Domov">
-          ⌂
-        </button>
-        <button onClick={onGaming} aria-label="Gaming zóna">
-          ♜
-        </button>
-        <button onClick={onChill} aria-label="Chill zóna">
-          ◎
-        </button>
-      </nav>
-    </main>
   );
 }
 
@@ -187,7 +143,29 @@ function ChillScreen({
 }
 
 export default function Home() {
-  const [view, setView] = useState<AppView>("zones");
+  const [view, setView] = useState<AppView>("avatar");
+  const [avatar, setAvatar] = useState<AvatarId | null>(null);
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(AVATAR_STORAGE_KEY);
+    if (stored === "dievca" || stored === "chlapec") {
+      setAvatar(stored);
+      setView("zones");
+    }
+  }, []);
+
+  const selectAvatar = (chosen: AvatarId) => {
+    window.localStorage.setItem(AVATAR_STORAGE_KEY, chosen);
+    setAvatar(chosen);
+    setView("zones");
+  };
+
+  const changeAvatar = () => {
+    window.localStorage.removeItem(AVATAR_STORAGE_KEY);
+    setAvatar(null);
+    setView("avatar");
+  };
+
   let content;
 
   if (view === "meteor") content = <MeteorGame onBack={() => setView("games")} />;
@@ -195,6 +173,7 @@ export default function Home() {
   else if (view === "bubbles") content = <NeonBubbles onBack={() => setView("games")} />;
   else if (view === "sudoku") content = <SudokuApp onBack={() => setView("chill")} />;
   else if (view === "maze") content = <NeonMaze onBack={() => setView("chill")} />;
+  else if (view === "skola") content = <SkolskaCast onBack={() => setView("zones")} />;
   else if (view === "games")
     content = (
       <GamesScreen
@@ -212,7 +191,17 @@ export default function Home() {
         onMaze={() => setView("maze")}
       />
     );
-  else content = <ZoneScreen onGaming={() => setView("games")} onChill={() => setView("chill")} />;
+  else if (view === "zones" && avatar)
+    content = (
+      <Bunker
+        avatar={avatar}
+        onGaming={() => setView("games")}
+        onChill={() => setView("chill")}
+        onSkola={() => setView("skola")}
+        onChangeAvatar={changeAvatar}
+      />
+    );
+  else content = <AvatarSelect onSelect={selectAvatar} />;
 
   return (
     <div className={`talumi-stage talumi-stage--${view}`}>

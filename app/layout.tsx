@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./talumi/talumi.css";
+import "./talumi/bunker.css";
 import "./sudoku/sudoku.css";
 import "./globals.css";
 

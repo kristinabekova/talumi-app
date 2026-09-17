@@ -1,0 +1,206 @@
+:root {
+  --bunker-ink: #33125b;
+  --bunker-mint: #57e6cf;
+  --bunker-mint-deep: #21c9c9;
+  --bunker-turquoise: #22c7ef;
+  --bunker-violet: #a765f5;
+  --bunker-amber: #f2b453;
+  --bunker-pink: #ff9ae0;
+}
+
+/* Spoločné svetlé tyrkysovo-mintové pozadie pre Bunker aj výber avatara */
+.bunker-window {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f6f2ff 0%, #eafffb 34%, #b9fbef 62%, var(--bunker-mint) 84%, var(--bunker-mint-deep) 100%);
+}
+.bunker-window-stars {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(38vw 38vw at 82% 8%, rgba(255, 154, 224, .38), transparent 68%),
+    radial-gradient(30vw 30vw at 10% 16%, rgba(124, 147, 251, .28), transparent 65%);
+  filter: blur(2px);
+}
+.bunker-window-planet {
+  position: absolute;
+  left: 50%;
+  bottom: -34vw;
+  width: 140vw;
+  height: 90vw;
+  max-width: 980px;
+  max-height: 640px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, #d8fff8 0%, var(--bunker-mint) 45%, var(--bunker-mint-deep) 78%, transparent 80%);
+  opacity: .8;
+}
+
+.avatar-select-screen {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  overflow: hidden auto;
+  color: var(--bunker-ink);
+  padding: 22px 18px 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Bunker: hotová ilustrovaná scéna (podľa pohlavia avatara) + neviditeľné klikacie zóny navrchu */
+.bunker-screen {
+  position: relative;
+  overflow-y: auto;
+  background: #e7ebf2;
+  display: flex;
+  justify-content: center;
+}
+.bunker-scene {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+}
+.bunker-scene-bg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.bunker-hotspot {
+  position: absolute;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.bunker-hotspot:disabled {
+  cursor: default;
+}
+.bunker-hotspot:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+  border-radius: 16px;
+}
+
+.hotspot-chill { left: 1%; top: 25.5%; width: 35%; height: 8%; }
+.hotspot-school { left: 41.5%; top: 27%; width: 33%; height: 7%; }
+.hotspot-math { left: 73.5%; top: 33%; width: 26%; height: 7%; }
+.hotspot-wardrobe { left: 1%; top: 53.5%; width: 35%; height: 6.5%; }
+.hotspot-back { left: 1%; top: 93.5%; width: 35%; height: 5%; }
+
+.soon-badge {
+  position: absolute;
+  right: 6px;
+  top: -10px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #33125b;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .3);
+}
+
+/* Výber avatara */
+.avatar-select-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 440px;
+  margin: auto 0;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.avatar-select-logo {
+  width: 148px;
+  margin: 0 0 18px;
+}
+.avatar-select-content h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 1000;
+  color: var(--bunker-ink);
+}
+.avatar-select-lead {
+  margin: 12px 0 28px;
+  color: rgba(51, 18, 91, .68);
+  font-size: 16px;
+  line-height: 1.5;
+}
+.avatar-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+.avatar-option {
+  border: 1px solid rgba(34, 199, 239, .4);
+  background: rgba(255, 255, 255, .72);
+  border-radius: 26px;
+  padding: 16px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 12px 26px rgba(33, 201, 201, .14);
+}
+.avatar-option:hover {
+  border-color: var(--bunker-turquoise);
+  transform: translateY(-3px);
+}
+.avatar-option img {
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 18px rgba(33, 82, 82, .22));
+}
+.avatar-option span {
+  font-weight: 900;
+  font-size: 15px;
+  color: var(--bunker-ink);
+}
+.avatar-select-mascot {
+  margin-top: 30px;
+  width: 88px;
+}
+
+.skola-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  color: var(--bunker-mint-deep);
+}
+.skola-back {
+  margin-top: 30px;
+}
+.lumi-mascot {
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 16px rgba(33, 201, 201, .3));
+  animation: lumi-float 3.2s ease-in-out infinite;
+}
+@keyframes lumi-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Pictogramy z pôvodného vizuálu sa do nového Bunkra nehodia (vlastné pozadie) */
+.talumi-pictograms--avatar,
+.talumi-pictograms--zones,
+.talumi-pictograms--skola {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .avatar-select-content h1 { font-size: 26px; }
+}

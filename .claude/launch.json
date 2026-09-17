@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "talumi-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--script-shell=C:\\Program Files\\Git\\bin\\bash.exe"],
+      "port": 5173
+    }
+  ]
+}
