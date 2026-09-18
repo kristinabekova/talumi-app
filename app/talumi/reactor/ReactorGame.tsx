@@ -17,15 +17,7 @@ function rectStyle(r: Rect, grow = 0): React.CSSProperties {
   };
 }
 
-export function ReactorGame({
-  difficulty,
-  onBack,
-  onChooseDifficulty,
-}: {
-  difficulty: Difficulty;
-  onBack: () => void;
-  onChooseDifficulty: () => void;
-}) {
+export function ReactorGame({ difficulty, onBack }: { difficulty: Difficulty; onBack: () => void }) {
   const [paused, setPaused] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const game = useReactorGame(paused, difficulty);
@@ -96,14 +88,6 @@ export function ReactorGame({
         onToggleSound={() => setSoundOn((v) => !v)}
       />
 
-      <div className="reactor-stats">
-        <button className="reactor-pill reactor-pill-btn" onClick={onChooseDifficulty}>
-          Oblasť {difficulty} · Zmeniť
-        </button>
-        <span className="reactor-pill">Doplnené {game.progress.done}/{game.progress.total}</span>
-        <span className="reactor-pill gold">C {game.coins}</span>
-      </div>
-
       <div
         className={`reactor-stage${game.releasing ? " is-releasing" : ""}${game.solved ? " is-solved" : ""}`}
         data-color={game.color}
@@ -149,7 +133,6 @@ export function ReactorGame({
             const classes = [
               "reactor-slot",
               given ? "given" : "editable",
-              !given && value === null && !isSelected ? "empty" : "",
               isSelected ? "selected" : "",
               status !== "idle" ? status : "",
             ].filter(Boolean).join(" ");

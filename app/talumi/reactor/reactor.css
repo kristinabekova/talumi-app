@@ -7,21 +7,6 @@
   align-items: center;
 }
 
-.reactor-stats {
-  display: flex;
-  gap: 8px;
-  margin: 10px 0 4px;
-}
-.reactor-pill {
-  background: #fff;
-  border-radius: 999px;
-  padding: 7px 14px;
-  font-size: 12px;
-  font-weight: 900;
-  color: #33005b;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
-}
-.reactor-pill.gold { background: #ffd166; }
 
 .reactor-select-top {
   height: 60px;
@@ -140,8 +125,8 @@
   --glow: #5ce1ff;
   position: relative;
   container-type: inline-size;
-  height: clamp(520px, calc(100dvh - 210px), 880px);
-  max-width: calc(100vw - 16px);
+  height: clamp(520px, calc(100dvh - 165px), 960px);
+  max-width: calc(100vw - 8px);
   margin: 4px auto 0;
   flex: none;
 }
@@ -206,11 +191,6 @@
 }
 .reactor-slot.given { cursor: default; }
 .reactor-slot.editable { color: var(--accent); }
-.reactor-slot.empty { animation: reactor-slot-pulse 1.8s ease-in-out infinite; }
-@keyframes reactor-slot-pulse {
-  0%, 100% { box-shadow: inset 0 0 0 .5cqw transparent; }
-  50% { box-shadow: inset 0 0 0 .5cqw var(--accent), 0 0 2.5cqw var(--glow); }
-}
 .reactor-slot.selected {
   background: rgba(255, 255, 255, .55);
   box-shadow: inset 0 0 0 .7cqw var(--accent), 0 0 3.5cqw var(--glow);
@@ -309,12 +289,6 @@
   75% { transform: translate(.5cqw, -.3cqw); }
 }
 
-.reactor-pill-btn {
-  border: 0;
-  font-family: inherit;
-  cursor: pointer;
-  color: #08807d;
-}
 
 .reactor-success {
   width: max-content;
@@ -353,4 +327,3 @@
 
 .reactor-screen { overflow-x: hidden; padding-bottom: 24px; }
 .reactor-screen .game-chrome-hint { margin: 10px auto 0; padding: 10px 24px; }
-.reactor-stats { flex-wrap: wrap; justify-content: center; margin: 0 8px 2px; }

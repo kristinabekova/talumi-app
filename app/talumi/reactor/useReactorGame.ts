@@ -96,24 +96,11 @@ export function useReactorGame(paused: boolean, difficulty: Difficulty) {
   const selectCell = useCallback((row: number, col: number) => {
     if (paused || solved || puzzle.given[row][col]) return;
     setSelected({ row, col });
-    const current = entered[row][col];
-    setBuffer(current === null ? "" : String(current));
-  }, [paused, solved, puzzle, entered]);
-
-  const pressDigit = useCallback((digit: number) => {
-    if (paused || solved || !selected) return;
-    setBuffer((b) => (b.length >= 3 ? b : b + String(digit)));
-  }, [paused, solved, selected]);
-
-  const pressClear = useCallback(() => {
-    if (paused || solved || !selected) return;
+    // Re-tapping a filled cell starts a fresh entry instead of appending to the old number.
     setBuffer("");
-  }, [paused, solved, selected]);
+  }, [paused, solved, puzzle]);
 
-  const pressConfirm = useCallback(() => {
-    if (paused || solved || !selected) return;
-    const { row, col } = selected;
-    const value = buffer === "" ? null : Number(buffer);
+  const commitCell = useCallback((row: number, col: number, value: number | null) => {
     setEntered((prev) => {
       const next = prev.map((r) => [...r]);
       next[row][col] = value;
@@ -128,7 +115,38 @@ export function useReactorGame(paused: boolean, difficulty: Difficulty) {
     });
     setSelected(null);
     setBuffer("");
-  }, [paused, solved, selected, buffer, isFilled, validateAll]);
+  }, [isFilled, validateAll]);
+
+  // The number is entered as soon as it has as many digits as the correct answer.
+  const pressDigit = useCallback((digit: number) => {
+    if (paused || solved || !selected) return;
+    const { row, col } = selected;
+    const expectedDigits = String(puzzle.values[row][col]).length;
+    const next = buffer + String(digit);
+    if (next.length < expectedDigits) {
+      setBuffer(next);
+      return;
+    }
+    commitCell(row, col, Number(next));
+  }, [paused, solved, selected, buffer, puzzle, commitCell]);
+
+  const pressClear = useCallback(() => {
+    if (paused || solved || !selected) return;
+    if (buffer !== "") {
+      setBuffer("");
+      return;
+    }
+    commitCell(selected.row, selected.col, null);
+  }, [paused, solved, selected, buffer, commitCell]);
+
+  const pressConfirm = useCallback(() => {
+    if (paused || solved || !selected) return;
+    if (buffer === "") {
+      setSelected(null);
+      return;
+    }
+    commitCell(selected.row, selected.col, Number(buffer));
+  }, [paused, solved, selected, buffer, commitCell]);
 
   const useHint = useCallback(() => {
     if (paused || solved) return;

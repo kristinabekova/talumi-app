@@ -9,11 +9,7 @@ export function ReactorApp({ onBack }: { onBack: () => void }) {
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   if (difficulty)
     return (
-      <ReactorGame
-        difficulty={difficulty}
-        onBack={onBack}
-        onChooseDifficulty={() => setDifficulty(null)}
-      />
+      <ReactorGame difficulty={difficulty} onBack={() => setDifficulty(null)} />
     );
   return <DifficultySelect onBack={onBack} onSelect={setDifficulty} />;
 }
