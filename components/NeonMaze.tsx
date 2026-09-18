@@ -162,7 +162,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     stack.push([0, 0]);
 
     while (stack.length > 0) {
-      const idx = Math.random() < 0.35 ? Math.floor(Math.random() * stack.length) : stack.length - 1;
+      const idx = Math.random() < 0.5 ? Math.floor(Math.random() * stack.length) : stack.length - 1;
       const [cr, cc] = stack[idx];
 
       const neighbors: { r: number; c: number; dir: "top" | "right" | "bottom" | "left" }[] = [];
@@ -196,8 +196,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   };
 
   const initMaze = (targetLevel: number) => {
-    const currentSize = 6 + Math.floor((targetLevel - 1) / 5);
-    const cappedSize = Math.min(currentSize, 8);
+    const cappedSize = targetLevel <= 4 ? 6 : targetLevel <= 8 ? 7 : targetLevel <= 13 ? 8 : 9;
     setGridSize(cappedSize);
 
     const newMaze = generateComplexMaze(cappedSize);
@@ -212,7 +211,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     isLockedRef.current = false;
     setIsCelebrating(false);
 
-    const hasItems = Math.random() < 0.3;
+    const hasItems = Math.random() < 0.6;
     let newItems: Item[] = [];
 
     if (hasItems) {
