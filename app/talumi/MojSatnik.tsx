@@ -15,11 +15,11 @@ const IMG_W = 941;
 const IMG_H = 1672;
 
 const OUTFIT_COUNT = 6;
-const OUTFIT_ROW = { top: 0.548, height: 0.145 }; // fraction of IMG_H
+const OUTFIT_ROW = { top: 0.5562, height: 0.1525 }; // fraction of IMG_H
 const ACCESSORY_COUNT: Record<AvatarId, number> = { chlapec: 6, dievca: 7 };
-const ACCESSORY_ROW = { top: 0.723, height: 0.095 };
+const ACCESSORY_ROW = { top: 0.7327, height: 0.0777 };
 const SHOE_COUNT = 6;
-const SHOE_ROW = { top: 0.815, height: 0.11 };
+const SHOE_ROW = { top: 0.8284, height: 0.0837 };
 
 // Box the "live preview" (swapped outfit) fills, below the header and
 // above the outfit row.
