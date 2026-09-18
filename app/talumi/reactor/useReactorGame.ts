@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { generatePyramid } from "./generator";
+import { randomColor, type ReactorColor } from "./layout";
 import type { Difficulty, PyramidPuzzle, PyramidSize } from "./types";
+
+/** The crystal fills up over this many solved levels, then releases its energy. */
+export const SERIES_LENGTH = 4;
+export const RELEASE_MS = 2600;
 
 export type CellStatus = "idle" | "wrong" | "hinted";
 
@@ -31,6 +36,8 @@ export function useReactorGame(paused: boolean, difficulty: Difficulty) {
   const [buffer, setBuffer] = useState("");
   const [solved, setSolved] = useState(false);
   const [coins, setCoins] = useState(120);
+  const [color, setColor] = useState<ReactorColor>(() => randomColor());
+  const [releasing, setReleasing] = useState(false);
   const wrongTimerRef = useRef<number | null>(null);
 
   const startLevel = useCallback(() => {
@@ -67,16 +74,24 @@ export function useReactorGame(paused: boolean, difficulty: Difficulty) {
       return nextStatus.map((row, r) => row.map((s, c) => (prev[r][c] === "hinted" ? "hinted" : s)));
     });
     if (allCorrect) {
+      const isRelease = level % SERIES_LENGTH === 0;
       setSolved(true);
       setCoins((v) => v + 5);
-      window.setTimeout(() => setLevel((v) => v + 1), 1200);
+      if (isRelease) setReleasing(true);
+      window.setTimeout(() => {
+        if (isRelease) {
+          setReleasing(false);
+          setColor((c) => randomColor(c));
+        }
+        setLevel((v) => v + 1);
+      }, isRelease ? RELEASE_MS : 1200);
     } else {
       if (wrongTimerRef.current) window.clearTimeout(wrongTimerRef.current);
       wrongTimerRef.current = window.setTimeout(() => {
         setStatus((prev) => prev.map((row) => row.map((s) => (s === "wrong" ? "idle" : s))));
       }, 900);
     }
-  }, [puzzle]);
+  }, [puzzle, level]);
 
   const selectCell = useCallback((row: number, col: number) => {
     if (paused || solved || puzzle.given[row][col]) return;
@@ -153,6 +168,8 @@ export function useReactorGame(paused: boolean, difficulty: Difficulty) {
     buffer,
     solved,
     coins,
+    color,
+    releasing,
     progress,
     selectCell,
     pressDigit,

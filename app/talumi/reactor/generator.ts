@@ -66,60 +66,54 @@ function buildPyramid(size: PyramidSize, base: number[]): number[][] {
   return rows;
 }
 
+
 function crossesTen(left: number, right: number) {
   return (left % 10) + (right % 10) >= 10;
 }
 
-function satisfiesCrossing(size: PyramidSize, values: number[][], mode: "never" | "always") {
-  for (const rel of relationsFor(size)) {
-    const crosses = crossesTen(values[rel.leftRow][rel.leftCol], values[rel.rightRow][rel.rightCol]);
-    if (mode === "never" && crosses) return false;
-    if (mode === "always" && !crosses) return false;
+function countCrossings(size: PyramidSize, values: number[][]) {
+  const relations = relationsFor(size);
+  let crossings = 0;
+  for (const rel of relations) {
+    if (crossesTen(values[rel.leftRow][rel.leftCol], values[rel.rightRow][rel.rightCol])) crossings++;
   }
-  return true;
+  return { crossings, total: relations.length };
 }
 
-// Chained sums grow fast (a 4-floor apex can be many times the base numbers),
-// so the "result stays in this range" rule is checked only on the base-level
-// additions — the ones the child actually sees as single a+b=c steps, same
-// shape as the spec's own examples (7+5=12, 21+13=34, ...). Crossing-ten still
-// applies at every level, since that's a property of each addition step itself.
-function satisfiesResultRange(size: PyramidSize, values: number[][], min: number, max: number) {
-  for (const rel of relationsFor(size)) {
-    if (rel.leftRow !== 0) continue;
-    const result = values[rel.row][rel.col];
-    if (result < min || result > max) return false;
+// Oblasť rules. The apex limits are the spec's (max 20 / 11–20 / max 100).
+// Requiring every single addition of a pyramid to cross ten is mathematically
+// impossible for oblasť 2 (3 floors, apex ≤ 20) and leaves oblasť 4 with only a
+// few dozen base combinations, so those two tiers only demand that crossing
+// dominates: at least one crossing for oblasť 2, all but at most one for oblasť 4.
+const DIFFICULTY_RULES: Record<
+  Difficulty,
+  {
+    baseMin: number;
+    baseMax: number;
+    apexMin: number;
+    apexMax: number;
+    crossingOk: (crossings: number, total: number) => boolean;
   }
-  return true;
-}
-
-const DIFFICULTY_RULES: Record<Difficulty, { crossing: "never" | "always"; resultMin: number; resultMax: number }> = {
-  1: { crossing: "never", resultMin: 1, resultMax: 20 },
-  2: { crossing: "always", resultMin: 11, resultMax: 20 },
-  3: { crossing: "never", resultMin: 1, resultMax: 100 },
-  4: { crossing: "always", resultMin: 1, resultMax: 100 },
+> = {
+  1: { baseMin: 1, baseMax: 9, apexMin: 1, apexMax: 20, crossingOk: (c) => c === 0 },
+  2: { baseMin: 1, baseMax: 9, apexMin: 11, apexMax: 20, crossingOk: (c) => c >= 1 },
+  3: { baseMin: 1, baseMax: 25, apexMin: 30, apexMax: 100, crossingOk: (c) => c === 0 },
+  4: { baseMin: 1, baseMax: 40, apexMin: 30, apexMax: 100, crossingOk: (c, t) => c >= t - 1 },
 };
-
-function baseRange(difficulty: Difficulty, size: PyramidSize) {
-  if (difficulty <= 2) return { min: 1, max: 9 };
-  // Two-digit base numbers. The 4-floor pyramid gets a wider spread so its
-  // ones digits vary enough for oblasť 4's "always crosses ten" rule to be
-  // reachable (a narrow band like 10–15 has almost no ones digits ≥ 5).
-  return size === 3 ? { min: 10, max: 30 } : { min: 10, max: 45 };
-}
 
 function generateValues(size: PyramidSize, difficulty: Difficulty): number[][] {
   const rule = DIFFICULTY_RULES[difficulty];
-  const range = baseRange(difficulty, size);
-  for (let attempt = 0; attempt < 20000; attempt++) {
-    const base = Array.from({ length: size }, () => randInt(range.min, range.max));
+  for (let attempt = 0; attempt < 30000; attempt++) {
+    const base = Array.from({ length: size }, () => randInt(rule.baseMin, rule.baseMax));
     const values = buildPyramid(size, base);
-    if (!satisfiesResultRange(size, values, rule.resultMin, rule.resultMax)) continue;
-    if (!satisfiesCrossing(size, values, rule.crossing)) continue;
+    const apex = values[size - 1][0];
+    if (apex < rule.apexMin || apex > rule.apexMax) continue;
+    const { crossings, total } = countCrossings(size, values);
+    if (!rule.crossingOk(crossings, total)) continue;
     return values;
   }
   // Safety net: extremely unlikely, but never leave the generator empty-handed.
-  const base = Array.from({ length: size }, () => randInt(range.min, range.max));
+  const base = Array.from({ length: size }, () => randInt(rule.baseMin, rule.baseMax));
   return buildPyramid(size, base);
 }
 

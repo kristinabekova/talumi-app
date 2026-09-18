@@ -23,25 +23,6 @@
 }
 .reactor-pill.gold { background: #ffd166; }
 
-.reactor-hint-text {
-  max-width: 380px;
-  text-align: center;
-  font-size: 13px;
-  color: #645675;
-  font-weight: 600;
-  margin: 6px 16px 18px;
-}
-.reactor-change-difficulty {
-  border: 0;
-  background: none;
-  padding: 0;
-  font: inherit;
-  font-weight: 900;
-  color: #08a29f;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
 .reactor-select-top {
   height: 60px;
   width: 100%;
@@ -154,103 +135,199 @@
   cursor: pointer;
 }
 
-.reactor-pyramid {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 22px;
+.reactor-stage {
+  --accent: #14a7e0;
+  --glow: #5ce1ff;
+  position: relative;
+  container-type: inline-size;
+  height: clamp(520px, calc(100dvh - 210px), 880px);
+  max-width: calc(100vw - 16px);
+  margin: 4px auto 0;
+  flex: none;
 }
-.reactor-row {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
+.reactor-stage[data-color="fialova"] { --accent: #b13fe0; --glow: #e58cff; }
+.reactor-stage[data-color="zlta"] { --accent: #e58a00; --glow: #ffcf5a; }
+
+.reactor-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+  pointer-events: none;
+  animation: reactor-art-in .7s ease-out;
 }
-.reactor-cell {
-  width: 58px;
-  height: 58px;
-  border-radius: 16px;
-  border: 2px solid #d9cde3;
-  background: #fff;
-  color: #33005b;
-  font-size: 20px;
+@keyframes reactor-art-in {
+  from { filter: brightness(2.4) saturate(.6); }
+  to { filter: brightness(1) saturate(1); }
+}
+
+.reactor-crystal-dim,
+.reactor-crystal-glow {
+  position: absolute;
+  pointer-events: none;
+  transition: opacity .9s ease;
+}
+.reactor-crystal-dim {
+  background: radial-gradient(ellipse at 50% 55%, rgba(3, 8, 26, .9) 0%, rgba(3, 8, 26, .72) 42%, rgba(3, 8, 26, 0) 72%);
+  opacity: calc(.8 * (1 - var(--charge) / 4));
+}
+.reactor-crystal-glow {
+  background: radial-gradient(ellipse at 50% 55%, var(--glow) 0%, rgba(255, 255, 255, 0) 62%);
+  mix-blend-mode: screen;
+  opacity: calc(var(--charge) / 4 * .85);
+}
+.reactor-stage[style*="--charge: 3"] .reactor-crystal-glow,
+.reactor-stage[style*="--charge: 4"] .reactor-crystal-glow {
+  animation: reactor-crystal-pulse 1.4s ease-in-out infinite alternate;
+}
+@keyframes reactor-crystal-pulse {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.5); }
+}
+
+.reactor-slot {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  border-radius: 18%/22%;
+  background: transparent;
+  color: #12305f;
+  font-family: inherit;
+  font-size: var(--cell-font);
   font-weight: 1000;
+  line-height: 1;
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: transform .12s ease, box-shadow .12s ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow .15s ease, background .15s ease;
 }
-.reactor-cell.given {
-  background: #f0e8f7;
-  color: #48146f;
-  cursor: default;
+.reactor-slot.given { cursor: default; }
+.reactor-slot.editable { color: var(--accent); }
+.reactor-slot.empty { animation: reactor-slot-pulse 1.8s ease-in-out infinite; }
+@keyframes reactor-slot-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 .5cqw transparent; }
+  50% { box-shadow: inset 0 0 0 .5cqw var(--accent), 0 0 2.5cqw var(--glow); }
 }
-.reactor-cell.editable:hover:not(:disabled) {
-  transform: translateY(-2px);
-  border-color: #08c9c7;
+.reactor-slot.selected {
+  background: rgba(255, 255, 255, .55);
+  box-shadow: inset 0 0 0 .7cqw var(--accent), 0 0 3.5cqw var(--glow);
 }
-.reactor-cell.selected {
-  border-color: #08c9c7;
-  box-shadow: inset 0 0 0 3px #08c9c7, 0 0 14px rgba(8, 201, 199, .5);
-  background: #eafffd;
+.reactor-slot.hinted {
+  color: #b87500;
+  box-shadow: inset 0 0 0 .6cqw #f2b453, 0 0 3cqw rgba(242, 180, 83, .8);
 }
-.reactor-cell.hinted {
-  border-color: #f2b453;
-  background: #fff6e6;
-  box-shadow: 0 0 12px rgba(242, 180, 83, .6);
-}
-.reactor-cell.wrong {
-  border-color: #c64075;
-  background: #fff0f5;
+.reactor-slot.wrong {
+  background: rgba(255, 90, 120, .4);
+  box-shadow: inset 0 0 0 .7cqw #d0305f;
   animation: reactor-shake .4s ease;
+}
+.is-solved .reactor-slot {
+  box-shadow: inset 0 0 0 .6cqw var(--accent), 0 0 3cqw var(--glow);
 }
 
 @keyframes reactor-shake {
   0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-6px); }
-  40%, 80% { transform: translateX(6px); }
+  20%, 60% { transform: translateX(-1.4cqw); }
+  40%, 80% { transform: translateX(1.4cqw); }
 }
 
-.reactor-keypad {
-  width: min(320px, calc(100% - 32px));
-}
-.reactor-keypad-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-.reactor-keypad-grid button {
-  aspect-ratio: 1;
-  border: 1px solid #d9cde3;
-  border-radius: 16px;
-  background: #fff;
-  color: #33005b;
-  font-size: 22px;
-  font-weight: 1000;
+.reactor-key {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  border-radius: 20%;
+  background: transparent;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.reactor-keypad-grid button:disabled {
-  opacity: .4;
-  cursor: default;
+.reactor-key:disabled { cursor: default; }
+.reactor-key:active:not(:disabled) { background: rgba(255, 255, 255, .45); }
+
+.reactor-release {
+  position: absolute;
+  pointer-events: none;
+  z-index: 4;
 }
-.reactor-keypad-grid button:hover:not(:disabled) {
-  border-color: #08c9c7;
-  background: #eaffff;
+.reactor-release .ring {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 40%;
+  aspect-ratio: 1;
+  margin: -20% 0 0 -20%;
+  border: .8cqw solid var(--glow);
+  border-radius: 50%;
+  box-shadow: 0 0 4cqw var(--glow), inset 0 0 4cqw var(--glow);
+  opacity: 0;
+  animation: reactor-ring 1.5s ease-out forwards;
 }
-.reactor-confirm {
-  background: linear-gradient(90deg, #08d2c8, #19c4e0) !important;
-  color: #173450 !important;
-  border: 0 !important;
+.reactor-release .r2 { animation-delay: .35s; }
+.reactor-release .r3 { animation-delay: .7s; }
+@keyframes reactor-ring {
+  0% { transform: scale(.2); opacity: 1; }
+  100% { transform: scale(4.2); opacity: 0; }
+}
+.reactor-release .rays {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 150%;
+  aspect-ratio: 1;
+  margin: -75% 0 0 -75%;
+  background: repeating-conic-gradient(from 0deg, #fff 0 3deg, var(--glow) 3deg 8deg, rgba(255, 255, 255, 0) 8deg 20deg);
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(circle, #000 18%, rgba(0, 0, 0, 0) 72%);
+  mask-image: radial-gradient(circle, #000 18%, rgba(0, 0, 0, 0) 72%);
+  opacity: 0;
+  animation: reactor-rays 1.9s ease-out .15s forwards;
+}
+@keyframes reactor-rays {
+  0% { transform: rotate(0deg) scale(.3); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: rotate(35deg) scale(1.15); opacity: 0; }
+}
+.reactor-release .flash {
+  position: absolute;
+  inset: -60% -50%;
+  background: radial-gradient(circle at 50% 50%, #fff 0%, var(--glow) 28%, rgba(255, 255, 255, 0) 65%);
+  opacity: 0;
+  animation: reactor-flash 2.6s ease-in forwards;
+}
+@keyframes reactor-flash {
+  0%, 55% { opacity: 0; }
+  92%, 100% { opacity: .85; }
+}
+.is-releasing .reactor-art {
+  animation: reactor-quake .5s linear .1s 3;
+}
+@keyframes reactor-quake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-.5cqw, .3cqw); }
+  75% { transform: translate(.5cqw, -.3cqw); }
+}
+
+.reactor-pill-btn {
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+  color: #08807d;
 }
 
 .reactor-success {
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  text-align: center;
   position: fixed;
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%);
   background: #173450;
   color: #7dfff0;
-  padding: 14px 26px;
+  padding: 11px 20px;
+  font-size: 14px;
   border-radius: 999px;
   font-weight: 900;
   display: flex;
@@ -273,8 +350,7 @@
   to { filter: drop-shadow(0 0 8px rgba(255, 209, 102, .9)); transform: scale(1.15); }
 }
 
-@media (max-width: 420px) {
-  .reactor-cell { width: 48px; height: 48px; font-size: 17px; border-radius: 13px; }
-  .reactor-row { gap: 7px; }
-  .reactor-pyramid { gap: 7px; }
-}
+
+.reactor-screen { overflow-x: hidden; padding-bottom: 24px; }
+.reactor-screen .game-chrome-hint { margin: 10px auto 0; padding: 10px 24px; }
+.reactor-stats { flex-wrap: wrap; justify-content: center; margin: 0 8px 2px; }
