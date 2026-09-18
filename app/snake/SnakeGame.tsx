@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { DIFFICULTY_CONFIG, Difficulty } from "./math";
 import { useSnakeGame } from "./useSnakeGame";
 import { TalumiLogo } from "../talumi/TalumiLogo";
-import { Gulko } from "../talumi/Gulko";
+import { Lumi } from "../talumi/Lumi";
 
 function Icon({ name }: { name: "play" | "info" | "sound" | "mute" | "pause" | "check" | "cross" | "home" }) {
   const paths = {
@@ -87,7 +87,7 @@ function GameScreen({ game }: { game: ReturnType<typeof useSnakeGame> }) {
       <div><small>Skóre</small><b>{game.score}</b></div><div><small>Rekord</small><b>{game.highScore}</b></div><div><small>Životy</small><b className="lives" aria-label={`${game.lives} životy`}>{Array.from({ length: 3 }, (_, index) => <i className={index < game.lives ? "full" : ""} key={index}/>)}</b></div><div><small>Úroveň</small><b>{game.level}</b></div>
     </section>
     <GameBoard game={game}/>
-    <Gulko className="snake-gulko" celebrating={game.gulkoCelebrating} />
+    <Lumi className="snake-gulko" celebrating={game.gulkoCelebrating} />
     <section className="challenge-panel" aria-live="polite"><small>AKTUÁLNE ZADANIE</small><h1>{game.challenge.label}</h1><div className="level-progress"><span>Postup levelu</span><b>{game.roundCorrect} / {game.roundTarget} správnych</b><div aria-hidden="true"><i style={{ width: `${game.roundCorrect / game.roundTarget * 100}%` }}/></div><small>Ešte {game.roundTarget - game.roundCorrect} správne</small></div><p className="game-rule-summary">+10 bodov za správnu · nesprávna = −1 život · 0 životov = koniec</p></section>
   </main>;
 }

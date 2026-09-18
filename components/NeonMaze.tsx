@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Gulko } from "@/app/talumi/Gulko";
+import { Lumi } from "@/app/talumi/Lumi";
 
 interface NeonMazeProps {
   onBack?: () => void;
@@ -587,7 +587,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
               zIndex: 30
             }}
           >
-            <Gulko
+            <Lumi
               animated={false}
               celebrating={isCelebrating}
               className="maze-gulko-mascot"
@@ -599,7 +599,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           <div className="milestone-modal-backdrop">
             <div className="milestone-modal-card">
               <div className="milestone-mascot-wrap">
-                <Gulko animated={false} celebrating={true} className="modal-gulko-mascot" />
+                <Lumi animated={false} celebrating={true} className="modal-gulko-mascot" />
               </div>
               <h3>Paráda!</h3>
               <p>{milestoneMessage}</p>
