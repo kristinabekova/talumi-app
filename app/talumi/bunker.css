@@ -70,9 +70,9 @@
 }
 .bunker-lumi {
   position: absolute;
-  left: 63%;
-  top: 76%;
-  width: 19%;
+  left: 60%;
+  top: 71%;
+  width: 25%;
   height: auto;
   z-index: 1;
   pointer-events: none;
