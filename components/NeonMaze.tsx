@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Lumi } from "@/app/talumi/Lumi";
+import { GameTopBar, GameHintButton, GamePauseOverlay } from "@/app/talumi/GameChrome";
 
 interface NeonMazeProps {
   onBack?: () => void;
@@ -32,6 +33,28 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   const [isGateOpen, setIsGateOpen] = useState(true);
   const [isCelebrating, setIsCelebrating] = useState(false);
   const [milestoneMessage, setMilestoneMessage] = useState<string | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [hintCell, setHintCell] = useState<{ r: number; c: number } | null>(null);
+  const hintTimerRef = useRef<number | null>(null);
+
+  const stars = useMemo(
+    () =>
+      Array.from({ length: 46 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        r: Math.random() * 1.3 + 0.4,
+        a: Math.random() * 0.5 + 0.35,
+      })),
+    []
+  );
+  const planets = useMemo(
+    () => [
+      { x: 0.14, y: 0.12, r: 0.16, c1: "rgba(167,101,245,.55)", c2: "rgba(34,216,239,0)" },
+      { x: 0.88, y: 0.2, r: 0.12, c1: "rgba(47,208,255,.4)", c2: "rgba(47,208,255,0)" },
+      { x: 0.82, y: 0.86, r: 0.18, c1: "rgba(167,101,245,.4)", c2: "rgba(167,101,245,0)" },
+    ],
+    []
+  );
 
   const [gulkoPos, setGulkoPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const currentPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -275,8 +298,56 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     }
   };
 
+  const bfsNextStep = (fromR: number, fromC: number, toR: number, toC: number) => {
+    const size = gridSize;
+    const grid = mazeRef.current;
+    if (!grid.length || (fromR === toR && fromC === toC)) return null;
+    const visited = Array.from({ length: size }, () => Array(size).fill(false));
+    const parent: (null | { r: number; c: number })[][] = Array.from({ length: size }, () =>
+      Array(size).fill(null)
+    );
+    const queue: [number, number][] = [[fromR, fromC]];
+    visited[fromR][fromC] = true;
+    while (queue.length) {
+      const [r, c] = queue.shift()!;
+      if (r === toR && c === toC) break;
+      const cell = grid[r]?.[c];
+      if (!cell) continue;
+      const moves: [number, number][] = [];
+      if (!cell.top && r > 0) moves.push([r - 1, c]);
+      if (!cell.bottom && r < size - 1) moves.push([r + 1, c]);
+      if (!cell.left && c > 0) moves.push([r, c - 1]);
+      if (!cell.right && c < size - 1) moves.push([r, c + 1]);
+      for (const [nr, nc] of moves) {
+        if (!visited[nr][nc]) {
+          visited[nr][nc] = true;
+          parent[nr][nc] = { r, c };
+          queue.push([nr, nc]);
+        }
+      }
+    }
+    if (!visited[toR][toC]) return null;
+    let step = { r: toR, c: toC };
+    while (parent[step.r][step.c] && !(parent[step.r][step.c]!.r === fromR && parent[step.r][step.c]!.c === fromC)) {
+      step = parent[step.r][step.c]!;
+    }
+    return step;
+  };
+
+  const handleHint = () => {
+    if (isLockedRef.current || milestoneMessage || paused) return;
+    const cur = gridPosRef.current;
+    const remaining = itemsRef.current.filter((it) => !it.collected);
+    const target = remaining.length ? remaining[0] : { r: gridSize - 1, c: gridSize - 1 };
+    const next = bfsNextStep(cur.r, cur.c, target.r, target.c);
+    if (!next) return;
+    if (hintTimerRef.current) window.clearTimeout(hintTimerRef.current);
+    setHintCell(next);
+    hintTimerRef.current = window.setTimeout(() => setHintCell(null), 1400);
+  };
+
   const tryMoveTo = (targetR: number, targetC: number) => {
-    if (isLockedRef.current || milestoneMessage) return;
+    if (isLockedRef.current || milestoneMessage || paused) return;
 
     const curR = gridPosRef.current.r;
     const curC = gridPosRef.current.c;
@@ -334,7 +405,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   };
 
   const handlePointerInteraction = (clientX: number, clientY: number) => {
-    if (isLockedRef.current || milestoneMessage) return;
+    if (isLockedRef.current || milestoneMessage || paused) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -382,44 +453,53 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     const innerH = height - padding * 2;
     const cellW = innerW / gridSize;
     const cellH = innerH / gridSize;
-    const wallW = Math.max(10, Math.floor(cellW * 0.18));
+    const wallW = Math.max(9, Math.floor(cellW * 0.16));
 
     ctx.clearRect(0, 0, width, height);
 
+    // Tmavé vesmírne pozadie
     const bgGrad = ctx.createRadialGradient(
-      width / 2,
-      height / 2,
-      20,
-      width / 2,
-      height / 2,
-      width * 0.7
+      width * 0.5, height * 0.4, 10,
+      width * 0.5, height * 0.5, width * 0.75
     );
-    bgGrad.addColorStop(0, "#ffffff");
-    bgGrad.addColorStop(1, "#f4fbff");
-
+    bgGrad.addColorStop(0, "#1a2350");
+    bgGrad.addColorStop(0.55, "#0d1436");
+    bgGrad.addColorStop(1, "#070a1f");
     ctx.fillStyle = bgGrad;
     ctx.beginPath();
-    ctx.roundRect(padding, padding, innerW, innerH, 20);
+    ctx.roundRect(padding, padding, innerW, innerH, 22);
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(0, 229, 209, 0.08)";
-    ctx.lineWidth = 1.5;
-    for (let i = 1; i < gridSize; i++) {
-      ctx.beginPath();
-      ctx.moveTo(padding + i * cellW, padding);
-      ctx.lineTo(padding + i * cellW, padding + innerH);
-      ctx.stroke();
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(padding, padding, innerW, innerH, 22);
+    ctx.clip();
 
+    // Jemné žiariace planéty na pozadí
+    for (const p of planets) {
+      const px = padding + p.x * innerW;
+      const py = padding + p.y * innerH;
+      const pr = p.r * Math.min(innerW, innerH);
+      const glow = ctx.createRadialGradient(px, py, 0, px, py, pr);
+      glow.addColorStop(0, p.c1);
+      glow.addColorStop(1, p.c2);
+      ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.moveTo(padding, padding + i * cellH);
-      ctx.lineTo(padding + innerW, padding + i * cellH);
-      ctx.stroke();
+      ctx.arc(px, py, pr, 0, Math.PI * 2);
+      ctx.fill();
     }
+
+    // Hviezdičky
+    for (const s of stars) {
+      ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+      ctx.beginPath();
+      ctx.arc(padding + s.x * innerW, padding + s.y * innerH, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
 
     const buildWallPath = (offsetY: number) => {
       ctx.beginPath();
-      ctx.roundRect(padding, padding + offsetY, innerW, innerH, 18);
-
       for (let r = 0; r < gridSize; r++) {
         for (let c = 0; c < gridSize; c++) {
           const cell = maze[r][c];
@@ -445,28 +525,40 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         }
       }
     };
+    // vonkajší rámik plavidla
+    const outerPath = () => { ctx.beginPath(); ctx.roundRect(padding, padding, innerW, innerH, 22); };
 
-    ctx.lineWidth = wallW;
+    // 1) tmavý podklad steny (hĺbka)
+    ctx.lineWidth = wallW + 4;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = "#008f87";
-    buildWallPath(5);
+    ctx.strokeStyle = "#050915";
+    buildWallPath(3);
     ctx.stroke();
+    outerPath(); ctx.lineWidth = wallW + 4; ctx.strokeStyle = "#050915"; ctx.stroke();
 
+    // 2) žiarivé tyrkysové jadro (glow)
+    ctx.shadowColor = "rgba(47,208,255,.9)";
+    ctx.shadowBlur = 14;
     ctx.lineWidth = wallW;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#00E5D1";
+    ctx.strokeStyle = "#22d8ef";
+    buildWallPath(0);
+    ctx.stroke();
+    outerPath(); ctx.lineWidth = wallW; ctx.strokeStyle = "#22d8ef"; ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 3) fialový vnútorný lem
+    ctx.lineWidth = Math.max(3, wallW * 0.42);
+    ctx.strokeStyle = "rgba(167,101,245,.85)";
     buildWallPath(0);
     ctx.stroke();
 
-    ctx.lineWidth = Math.max(3, wallW * 0.3);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#b3fff8";
-    buildWallPath(-1.5);
+    // 4) jasný biely stred (svetelná trubica)
+    ctx.lineWidth = Math.max(2, wallW * 0.22);
+    ctx.strokeStyle = "rgba(255,255,255,.92)";
+    buildWallPath(-wallW * 0.18);
     ctx.stroke();
-  }, [maze, gridSize]);
+  }, [maze, gridSize, stars, planets]);
 
   useEffect(() => {
     drawMazeCanvas();
@@ -476,39 +568,39 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
 
   return (
     <div className="neon-maze-stage">
-      <header className="neon-top-bar">
-        <button className="back-btn" onClick={onBack} aria-label="Späť do Chill zóny">
-          ←
-        </button>
+      <GameTopBar
+        title="Svetelné labyrinty"
+        onBack={() => onBack?.()}
+        onPause={() => setPaused(true)}
+      />
 
-        <div className="talumi-header-pills">
-          <div className="top-pill">
-            <span className="pill-icon">✦</span>
-            <span className="pill-text">Level {level}</span>
-          </div>
-
-          {items.length > 0 ? (
-            <div className="top-pill">
-              <span className="pill-icon spark-piktogram">✦</span>
-              <span className="pill-text">
-                {isGateOpen ? "Cieľ otvorený!" : `Objekty: ${remainingCount}`}
-              </span>
-            </div>
-          ) : (
-            <div className="top-pill">
-              <span className="pill-icon spark-piktogram">★</span>
-              <span className="pill-text">Cesta otvorená</span>
-            </div>
-          )}
+      <div className="maze-status-row">
+        <div className="top-pill">
+          <span className="pill-icon">✦</span>
+          <span className="pill-text">Level {level}</span>
         </div>
-      </header>
+
+        {items.length > 0 ? (
+          <div className="top-pill">
+            <span className="pill-icon spark-piktogram">✦</span>
+            <span className="pill-text">
+              {isGateOpen ? "Cieľ otvorený!" : `Objekty: ${remainingCount}`}
+            </span>
+          </div>
+        ) : (
+          <div className="top-pill">
+            <span className="pill-icon spark-piktogram">★</span>
+            <span className="pill-text">Cesta otvorená</span>
+          </div>
+        )}
+      </div>
 
       <main className="maze-game-area">
         <div className="instructions">
           <h2>Svetelné labyrinty</h2>
           <p>
             {isGateOpen
-              ? "Cieľ žiari! Preveď Guľka do mince"
+              ? "Cieľ žiari! Preveď Lumiho do mince"
               : "Pozbieraj objekty a odomkni cieľovú mincu"}
           </p>
         </div>
@@ -577,7 +669,21 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             </div>
           </div>
 
-          {/* GUĽKO AKO HRÁČ: Iba on sa teší priamo na minci */}
+          {hintCell && (
+            <div
+              className="board-overlay-item"
+              style={{
+                width: `calc((100% - 32px) / ${gridSize})`,
+                height: `calc((100% - 32px) / ${gridSize})`,
+                transform: `translate3d(calc(16px + ${hintCell.c * 100}%), calc(16px + ${hintCell.r * 100}%), 0)`,
+                zIndex: 4
+              }}
+            >
+              <div className="hint-pulse-ring" />
+            </div>
+          )}
+
+          {/* LUMI AKO HRÁČ: Iba on sa teší priamo na minci */}
           <div
             className="smooth-gulko-layer"
             style={{
@@ -594,6 +700,10 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
             />
           </div>
         </div>
+
+        <GameHintButton onClick={handleHint} />
+
+        {paused && <GamePauseOverlay onResume={() => setPaused(false)} />}
 
         {milestoneMessage && (
           <div className="milestone-modal-backdrop">
@@ -630,37 +740,15 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
           overflow: hidden;
         }
 
-        .neon-top-bar {
+        .maze-status-row {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: center;
+          gap: 10px;
           max-width: 650px;
           margin: 0 auto;
           width: 100%;
-          padding: 8px 0 16px;
-        }
-
-        .back-btn {
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          border: 0;
-          background: #ffffff;
-          box-shadow: 0 4px 14px rgba(51, 0, 91, 0.08);
-          font-size: 20px;
-          font-weight: 900;
-          color: #33005b;
-          cursor: pointer;
-          transition: transform 0.15s ease;
-        }
-        .back-btn:hover {
-          transform: scale(1.08);
-        }
-
-        .talumi-header-pills {
-          display: flex;
-          align-items: center;
-          gap: 10px;
+          padding: 10px 0 16px;
         }
 
         .top-pill {
@@ -721,19 +809,21 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
 
         .maze-interactive-wrap {
           position: relative;
+          box-sizing: border-box;
           width: min(88vw, 440px);
           aspect-ratio: 1;
-          box-shadow: 0 20px 48px rgba(0, 229, 209, 0.22), 0 8px 20px rgba(51, 0, 91, 0.08);
           border-radius: 28px;
           touch-action: none;
+          border: 3px solid #2fd0ff;
+          box-shadow: 0 20px 48px rgba(47, 208, 255, 0.28), 0 8px 20px rgba(10, 20, 50, 0.3), inset 0 0 20px rgba(167, 101, 245, 0.25);
         }
 
         .maze-canvas-element {
           width: 100%;
           height: 100%;
           display: block;
-          border-radius: 28px;
-          background: #ffffff;
+          border-radius: 25px;
+          background: #0d1436;
         }
 
         .board-overlay-item {
@@ -880,6 +970,20 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         }
         .milestone-btn:hover {
           transform: scale(1.04);
+        }
+
+        .hint-pulse-ring {
+          width: 62%;
+          height: 62%;
+          border-radius: 50%;
+          border: 3px solid #f2b453;
+          box-shadow: 0 0 16px rgba(242, 180, 83, .8);
+          animation: hintPulse 0.7s ease-in-out infinite alternate;
+        }
+
+        @keyframes hintPulse {
+          0% { transform: scale(0.85); opacity: .55; }
+          100% { transform: scale(1.1); opacity: 1; }
         }
 
         @keyframes floatPikto {
