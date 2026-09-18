@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { SoundToggle } from "@/app/talumi/GameChrome";
 
 interface NeonBubblesProps {
   onBack?: () => void;
@@ -27,6 +28,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
   const [wrongQuestionId, setWrongQuestionId] = useState<number | null>(null);
   const [isLevelCompleted, setIsLevelCompleted] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [soundOn, setSoundOn] = useState(true);
 
   // Drag states
   const [draggedBubble, setDraggedBubble] = useState<BubbleItem | null>(null);
@@ -38,6 +40,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
 
   // Zvuková odozva cez Web Audio API
   const playSound = (type: "correct" | "wrong") => {
+    if (!soundOn) return;
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
@@ -234,6 +237,7 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
         <div className="game-status-pills">
           <span className="pill">LEVEL <b>{level}</b></span>
           <span className="pill gold">SKÓRE <b>{score}</b></span>
+          <SoundToggle on={soundOn} onClick={() => setSoundOn((v) => !v)} className="bubbles-sound" />
         </div>
       </header>
 

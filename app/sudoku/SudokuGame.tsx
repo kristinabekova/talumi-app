@@ -13,8 +13,8 @@ function NumberPad({ size, onNumber, completed }: { size: SudokuSize; onNumber: 
   return <div className="number-pad" aria-label="Číselná klávesnica">{Array.from({ length: size }, (_, i) => i + 1).map(n => <button key={n} className={completed.includes(n) ? "complete-number" : ""} onClick={() => onNumber(n)}>{n}</button>)}</div>;
 }
 
-function Toolbar({ notesMode, canUndo, canRedo, onNotes, onErase, onUndo, onRedo, onHint, onNew, onRules, onCheck, sound, onSound }: { notesMode: boolean; canUndo: boolean; canRedo: boolean; onNotes: () => void; onErase: () => void; onUndo: () => void; onRedo: () => void; onHint: () => void; onNew: () => void; onRules: () => void; onCheck: () => void; sound: boolean; onSound: () => void }) {
-  return <div className="sudoku-toolbar"><button className={notesMode ? "active" : ""} onClick={onNotes} aria-pressed={notesMode}>✎ Poznámky</button><button onClick={onErase}>⌫ Vymazať</button><button onClick={onUndo} disabled={!canUndo}>↶ Späť</button><button onClick={onRedo} disabled={!canRedo}>↷ Znova</button><button onClick={onHint}>✦ Pomôcka</button><button onClick={onCheck}>✓ Skontrolovať</button><button onClick={onNew}>＋ Nová mriežka</button><button onClick={onRules}>? Pravidlá</button><button onClick={onSound} aria-label={sound ? "Vypnúť zvuk" : "Zapnúť zvuk"}>{sound ? "♪ Zvuk" : "♩ Bez zvuku"}</button></div>;
+function Toolbar({ notesMode, canUndo, canRedo, onNotes, onErase, onUndo, onRedo, onHint, onNew, onRules, onCheck }: { notesMode: boolean; canUndo: boolean; canRedo: boolean; onNotes: () => void; onErase: () => void; onUndo: () => void; onRedo: () => void; onHint: () => void; onNew: () => void; onRules: () => void; onCheck: () => void }) {
+  return <div className="sudoku-toolbar"><button className={notesMode ? "active" : ""} onClick={onNotes} aria-pressed={notesMode}>✎ Poznámky</button><button onClick={onErase}>⌫ Vymazať</button><button onClick={onUndo} disabled={!canUndo}>↶ Späť</button><button onClick={onRedo} disabled={!canRedo}>↷ Znova</button><button onClick={onHint}>✦ Pomôcka</button><button onClick={onCheck}>✓ Skontrolovať</button><button onClick={onNew}>＋ Nová mriežka</button><button onClick={onRules}>? Pravidlá</button></div>;
 }
 
 export default function SudokuGame({ size, resume, onBack, onChooseSize }: { size: SudokuSize; resume: boolean; onBack: () => void; onChooseSize: () => void }) {
@@ -85,10 +85,10 @@ export default function SudokuGame({ size, resume, onBack, onChooseSize }: { siz
   if (!game) return <main className="sudoku-page sudoku-loading"><div className="crystal-spinner">✦</div><p>Pripravujem kryštálovú mriežku…</p></main>;
   const completed = Array.from({ length: size }, (_, i) => i + 1).filter(n => game.values.filter(v => v === n).length === size);
   return <main className="sudoku-page game-mode">
-    <GameTopBar title="Kryštálová mriežka" onBack={onBack} onPause={() => setPaused(true)} />
+    <GameTopBar title="Kryštálová mriežka" onBack={onBack} onPause={() => setPaused(true)} sound={sound} onToggleSound={() => setSound(v => !v)} />
     <section className="sudoku-game"><div className="game-heading"><p className="sudoku-kicker">SUDOKU • {SIZE_META[size].mood.toUpperCase()}</p><h1>Kryštálová mriežka</h1><p className={conflicts.size ? "game-message warning" : "game-message"} role="status">{conflicts.size ? "⚠ " : "✦ "}{message}</p></div>
       <div className="grid-wrap"><SudokuGrid size={size} puzzle={game.puzzle} values={game.values} notes={game.notes} hints={game.hints} selected={selected} conflicts={conflicts} checkedWrong={checkedWrong} onSelect={setSelected} /></div>
-      <aside className="sudoku-controls"><NumberPad size={size} onNumber={enter} completed={completed} /><Toolbar notesMode={notesMode} canUndo={!!game.history.length} canRedo={!!game.future.length} onNotes={() => setNotesMode(v => !v)} onErase={erase} onUndo={undo} onRedo={redo} onHint={hint} onNew={startNew} onRules={() => setShowRules(true)} onCheck={check} sound={sound} onSound={() => setSound(v => !v)} /></aside>
+      <aside className="sudoku-controls"><NumberPad size={size} onNumber={enter} completed={completed} /><Toolbar notesMode={notesMode} canUndo={!!game.history.length} canRedo={!!game.future.length} onNotes={() => setNotesMode(v => !v)} onErase={erase} onUndo={undo} onRedo={redo} onHint={hint} onNew={startNew} onRules={() => setShowRules(true)} onCheck={check} /></aside>
     </section>
     <GameHintButton onClick={hint} />
     {showRules && <HowToPlay onClose={() => setShowRules(false)} />}

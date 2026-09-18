@@ -5,6 +5,7 @@ import { DIFFICULTY_CONFIG, Difficulty } from "./math";
 import { useSnakeGame } from "./useSnakeGame";
 import { TalumiLogo } from "../talumi/TalumiLogo";
 import { Lumi } from "../talumi/Lumi";
+import { SoundToggle } from "../talumi/GameChrome";
 
 function Icon({ name }: { name: "play" | "info" | "sound" | "mute" | "pause" | "check" | "cross" | "home" }) {
   const paths = {
@@ -106,7 +107,7 @@ export default function SnakeGame({ onBack }: { onBack?: () => void }) {
   const backToGames = onBack ?? game.exitGame;
   const inGame = ["playing", "paused", "hit", "levelup"].includes(game.phase);
   return <div className="talumi-app">
-    <header className="app-header"><button className="brand-button" onClick={backToGames} aria-label="Talumi – späť na výber hier"><TalumiLogo /></button><nav><button onClick={backToGames}>Hry</button><button onClick={game.openRules}>Ako hrať</button></nav>{inGame ? <div className="header-actions"><button onClick={game.openRules} aria-label="Otvoriť pravidlá"><Icon name="info"/></button><button onClick={() => game.setSoundOn(!game.soundOn)} aria-label={game.soundOn ? "Vypnúť zvuk" : "Zapnúť zvuk"}><Icon name={game.soundOn ? "sound" : "mute"}/></button><button onClick={game.pause} aria-label="Pozastaviť hru"><Icon name="pause"/></button></div> : <span className="header-label">Energický had</span>}</header>
+    <header className="app-header"><button className="brand-button" onClick={backToGames} aria-label="Talumi – späť na výber hier"><TalumiLogo /></button><nav><button onClick={backToGames}>Hry</button><button onClick={game.openRules}>Ako hrať</button></nav>{inGame ? <div className="header-actions"><button onClick={game.openRules} aria-label="Otvoriť pravidlá"><Icon name="info"/></button><SoundToggle on={game.soundOn} onClick={() => game.setSoundOn(!game.soundOn)} /><button onClick={game.pause} aria-label="Pozastaviť hru"><Icon name="pause"/></button></div> : <span className="header-label">Energický had</span>}</header>
     {game.phase === "intro" && <IntroScreen difficulty={game.difficulty} setDifficulty={game.setDifficulty} start={game.startGame} rules={game.openRules}/>} 
     {game.phase !== "intro" && game.phase !== "rules" && game.phase !== "gameover" && <GameScreen game={game}/>} 
     {game.phase === "rules" && <RulesScreen close={game.closeRules}/>}

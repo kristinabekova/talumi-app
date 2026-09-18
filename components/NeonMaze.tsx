@@ -34,6 +34,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   const [isCelebrating, setIsCelebrating] = useState(false);
   const [milestoneMessage, setMilestoneMessage] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
   const [hintCell, setHintCell] = useState<{ r: number; c: number } | null>(null);
   const hintTimerRef = useRef<number | null>(null);
 
@@ -79,6 +80,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
   ];
 
   const playSound = (type: "pickup" | "unlock" | "win" | "milestone") => {
+    if (!soundOn) return;
     try {
       const AudioCtx =
         window.AudioContext ||
@@ -573,6 +575,8 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
         title="Svetelné labyrinty"
         onBack={() => onBack?.()}
         onPause={() => setPaused(true)}
+        sound={soundOn}
+        onToggleSound={() => setSoundOn((v) => !v)}
       />
 
       <div className="maze-status-row">

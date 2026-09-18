@@ -35,6 +35,23 @@
   cursor: default;
   box-shadow: none;
 }
+.game-chrome-sound {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(47, 208, 255, .45);
+  background: rgba(10, 30, 63, .55);
+  color: #eaf6ff;
+  font-size: 13px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: .8;
+}
+.game-chrome-sound:hover {
+  opacity: 1;
+}
 .game-chrome-title {
   flex: 1;
   min-width: 0;

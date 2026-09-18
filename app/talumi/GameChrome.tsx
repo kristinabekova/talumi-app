@@ -2,18 +2,42 @@
 
 import React from "react";
 
+export function SoundToggle({
+  on,
+  onClick,
+  className = "",
+}: {
+  on: boolean;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      className={`game-chrome-sound ${className}`.trim()}
+      onClick={onClick}
+      aria-label={on ? "Vypnúť zvuk" : "Zapnúť zvuk"}
+    >
+      <span aria-hidden="true">{on ? "🔊" : "🔇"}</span>
+    </button>
+  );
+}
+
 export function GameTopBar({
   title,
   meta,
   onBack,
   onPause,
   paused,
+  sound,
+  onToggleSound,
 }: {
   title: React.ReactNode;
   meta?: React.ReactNode;
   onBack: () => void;
   onPause?: () => void;
   paused?: boolean;
+  sound?: boolean;
+  onToggleSound?: () => void;
 }) {
   return (
     <header className="game-chrome-top">
@@ -24,6 +48,7 @@ export function GameTopBar({
         <span>{title}</span>
         {meta && <span className="game-chrome-title-meta">{meta}</span>}
       </div>
+      {onToggleSound && <SoundToggle on={!!sound} onClick={onToggleSound} />}
       {onPause ? (
         <button className="game-chrome-circle" onClick={onPause} aria-label={paused ? "Pokračovať" : "Pauza"}>
           <span aria-hidden="true">{paused ? "▶" : "❚❚"}</span>
