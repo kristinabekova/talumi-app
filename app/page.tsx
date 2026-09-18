@@ -10,10 +10,11 @@ import { AvatarSelect, type AvatarId } from "./talumi/AvatarSelect";
 import { Bunker } from "./talumi/Bunker";
 import { SkolskaCast } from "./talumi/SkolskaCast";
 import { MojSatnik } from "./talumi/MojSatnik";
+import { ReactorGame } from "./talumi/ReactorGame";
 
 const AVATAR_STORAGE_KEY = "talumi_avatar";
 
-type AppView = "avatar" | "zones" | "games" | "meteor" | "snake" | "bubbles" | "chill" | "sudoku" | "maze" | "skola" | "satnik";
+type AppView = "avatar" | "zones" | "games" | "meteor" | "snake" | "bubbles" | "reactor" | "chill" | "sudoku" | "maze" | "skola" | "satnik";
 
 function DecorativePictograms({ view }: { view: AppView }) {
   const icons = ["spark", "ring", "eye", "puzzle", "star"];
@@ -36,11 +37,13 @@ function GamesScreen({
   onMeteor,
   onSnake,
   onBubbles,
+  onReactor,
 }: {
   onBack: () => void;
   onMeteor: () => void;
   onSnake: () => void;
   onBubbles: () => void;
+  onReactor: () => void;
 }) {
   return (
     <main className="games-screen">
@@ -83,6 +86,14 @@ function GamesScreen({
               alt="Neónové bubliny"
               className="card-art"
             />
+          </button>
+          <button className="game-card reactor-card" onClick={onReactor} aria-label="Hrať Oprav reaktor">
+            <span className="game-card-copy">
+              <strong>Oprav reaktor</strong>
+              <span>
+                Nová hra<br />už čoskoro
+              </span>
+            </span>
           </button>
         </div>
       </section>
@@ -172,6 +183,7 @@ export default function Home() {
   if (view === "meteor") content = <MeteorGame onBack={() => setView("games")} />;
   else if (view === "snake") content = <SnakeGame onBack={() => setView("games")} />;
   else if (view === "bubbles") content = <NeonBubbles onBack={() => setView("games")} />;
+  else if (view === "reactor") content = <ReactorGame onBack={() => setView("games")} />;
   else if (view === "sudoku") content = <SudokuApp onBack={() => setView("chill")} />;
   else if (view === "maze") content = <NeonMaze onBack={() => setView("chill")} />;
   else if (view === "skola") content = <SkolskaCast onBack={() => setView("zones")} />;
@@ -183,6 +195,7 @@ export default function Home() {
         onMeteor={() => setView("meteor")}
         onSnake={() => setView("snake")}
         onBubbles={() => setView("bubbles")}
+        onReactor={() => setView("reactor")}
       />
     );
   else if (view === "chill")

@@ -473,7 +473,8 @@
 .talumi-pictograms--avatar,
 .talumi-pictograms--zones,
 .talumi-pictograms--skola,
-.talumi-pictograms--satnik {
+.talumi-pictograms--satnik,
+.talumi-pictograms--reactor {
   display: none;
 }
 
