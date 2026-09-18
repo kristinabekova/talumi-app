@@ -96,6 +96,36 @@
 
 .hotspot-satnik-back { left: 1.5%; top: 0.8%; width: 12%; height: 6%; border-radius: 50%; }
 
+.satnik-preview-box {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 22px;
+  z-index: 1;
+  background: #eef1fb;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .6), 0 14px 30px rgba(33, 18, 60, .25);
+}
+
+.satnik-pick.selected {
+  border-radius: 16px;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--bunker-turquoise);
+}
+.satnik-pick.selected::after {
+  content: "✓";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bunker-turquoise);
+  color: #0a1b33;
+  font-size: 12px;
+  font-weight: 1000;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+}
+
 .hotspot-chill { left: 1%; top: 25.5%; width: 35%; height: 8%; }
 .hotspot-school { left: 41.5%; top: 27%; width: 33%; height: 7%; }
 .hotspot-math { left: 73.5%; top: 33%; width: 26%; height: 7%; }
