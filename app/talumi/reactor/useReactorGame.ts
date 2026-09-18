@@ -8,12 +8,9 @@ export type CellStatus = "idle" | "wrong" | "hinted";
 
 export type ReactorCell = { row: number; col: number };
 
-/** Level 1–4 = 3-floor pyramid, oblasti 1–4. Level 5–8 = 4-floor, oblasti 1–4.
- *  Level 9+ stays on the hardest 4-floor / oblasť 4 combination. */
-export function levelConfig(level: number): { size: PyramidSize; difficulty: Difficulty } {
-  const capped = Math.min(Math.max(level, 1), 8);
-  if (capped <= 4) return { size: 3, difficulty: capped as Difficulty };
-  return { size: 4, difficulty: (capped - 4) as Difficulty };
+/** Oblasti 1–2 are 3-floor pyramids, oblasti 3–4 are 4-floor pyramids. */
+export function sizeForDifficulty(difficulty: Difficulty): PyramidSize {
+  return difficulty <= 2 ? 3 : 4;
 }
 
 function emptyEntered(size: PyramidSize): (number | null)[][] {
@@ -24,28 +21,28 @@ function emptyStatus(size: PyramidSize): CellStatus[][] {
   return Array.from({ length: size }, (_, row) => Array(size - row).fill("idle" as CellStatus));
 }
 
-export function useReactorGame(paused: boolean) {
+export function useReactorGame(paused: boolean, difficulty: Difficulty) {
+  const size = sizeForDifficulty(difficulty);
   const [level, setLevel] = useState(1);
-  const [puzzle, setPuzzle] = useState<PyramidPuzzle>(() => generatePyramid(3, 1));
-  const [entered, setEntered] = useState<(number | null)[][]>(() => emptyEntered(3));
-  const [status, setStatus] = useState<CellStatus[][]>(() => emptyStatus(3));
+  const [puzzle, setPuzzle] = useState<PyramidPuzzle>(() => generatePyramid(size, difficulty));
+  const [entered, setEntered] = useState<(number | null)[][]>(() => emptyEntered(size));
+  const [status, setStatus] = useState<CellStatus[][]>(() => emptyStatus(size));
   const [selected, setSelected] = useState<ReactorCell | null>(null);
   const [buffer, setBuffer] = useState("");
   const [solved, setSolved] = useState(false);
   const [coins, setCoins] = useState(120);
   const wrongTimerRef = useRef<number | null>(null);
 
-  const startLevel = useCallback((targetLevel: number) => {
-    const { size, difficulty } = levelConfig(targetLevel);
+  const startLevel = useCallback(() => {
     setPuzzle(generatePyramid(size, difficulty));
     setEntered(emptyEntered(size));
     setStatus(emptyStatus(size));
     setSelected(null);
     setBuffer("");
     setSolved(false);
-  }, []);
+  }, [size, difficulty]);
 
-  useEffect(() => { startLevel(level); }, [level, startLevel]);
+  useEffect(() => { startLevel(); }, [level, startLevel]);
   useEffect(() => () => { if (wrongTimerRef.current) window.clearTimeout(wrongTimerRef.current); }, []);
 
   const isFilled = useCallback(
@@ -162,6 +159,6 @@ export function useReactorGame(paused: boolean) {
     pressClear,
     pressConfirm,
     useHint,
-    restart: () => startLevel(level),
+    restart: startLevel,
   };
 }

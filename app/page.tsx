@@ -10,7 +10,7 @@ import { AvatarSelect, type AvatarId } from "./talumi/AvatarSelect";
 import { Bunker } from "./talumi/Bunker";
 import { SkolskaCast } from "./talumi/SkolskaCast";
 import { MojSatnik } from "./talumi/MojSatnik";
-import { ReactorGame } from "./talumi/reactor/ReactorGame";
+import { ReactorApp } from "./talumi/reactor/ReactorApp";
 
 const AVATAR_STORAGE_KEY = "talumi_avatar";
 
@@ -175,7 +175,7 @@ export default function Home() {
   if (view === "meteor") content = <MeteorGame onBack={() => setView("games")} />;
   else if (view === "snake") content = <SnakeGame onBack={() => setView("games")} />;
   else if (view === "bubbles") content = <NeonBubbles onBack={() => setView("games")} />;
-  else if (view === "reactor") content = <ReactorGame onBack={() => setView("games")} />;
+  else if (view === "reactor") content = <ReactorApp onBack={() => setView("games")} />;
   else if (view === "sudoku") content = <SudokuApp onBack={() => setView("chill")} />;
   else if (view === "maze") content = <NeonMaze onBack={() => setView("chill")} />;
   else if (view === "skola") content = <SkolskaCast onBack={() => setView("zones")} />;

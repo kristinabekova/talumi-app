@@ -3,11 +3,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import { GameHintButton, GamePauseOverlay, GameTopBar } from "../GameChrome";
 import { useReactorGame } from "./useReactorGame";
+import type { Difficulty } from "./types";
 
-export function ReactorGame({ onBack }: { onBack: () => void }) {
+export function ReactorGame({
+  difficulty,
+  onBack,
+  onChooseDifficulty,
+}: {
+  difficulty: Difficulty;
+  onBack: () => void;
+  onChooseDifficulty: () => void;
+}) {
   const [paused, setPaused] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
-  const game = useReactorGame(paused);
+  const game = useReactorGame(paused, difficulty);
   const wasSolvedRef = useRef(false);
   const wrongSeenRef = useRef(false);
 
@@ -53,13 +62,17 @@ export function ReactorGame({ onBack }: { onBack: () => void }) {
       />
 
       <div className="reactor-stats">
-        <span className="reactor-pill">✦ {game.puzzle.size}-poschodová</span>
+        <span className="reactor-pill">Oblasť {difficulty} · {game.puzzle.size}-poschodová</span>
         <span className="reactor-pill">Doplnené {game.progress.done}/{game.progress.total}</span>
         <span className="reactor-pill gold">C {game.coins}</span>
       </div>
 
       <p className="reactor-hint-text">
         Ťukni na prázdne políčko a doplň číslo tak, aby platilo: horné = súčet dvoch spodných.
+        {" "}
+        <button className="reactor-change-difficulty" onClick={onChooseDifficulty}>
+          Zmeniť náročnosť
+        </button>
       </p>
 
       <div className="reactor-pyramid">
