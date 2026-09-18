@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Lumi } from "./Lumi";
 import type { AvatarId } from "./AvatarSelect";
 
 const BUNKER_SCENE: Record<AvatarId, string> = {
@@ -27,6 +28,8 @@ export function Bunker({
     <main className="bunker-screen">
       <div className="bunker-scene">
         <img className="bunker-scene-bg" src={BUNKER_SCENE[avatar]} alt="Môj bunker" draggable={false} />
+
+        <Lumi className="bunker-lumi" />
 
         <button className="bunker-hotspot hotspot-chill" onClick={onChill} aria-label="Chill zóna" />
 

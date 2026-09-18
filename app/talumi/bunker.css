@@ -68,6 +68,16 @@
   width: 100%;
   height: auto;
 }
+.bunker-lumi {
+  position: absolute;
+  left: 63%;
+  top: 76%;
+  width: 19%;
+  height: auto;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .bunker-hotspot {
   position: absolute;
   border: 0;
