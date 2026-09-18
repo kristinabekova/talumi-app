@@ -126,27 +126,19 @@ function ChillScreen({
         <p className="games-kicker">VYBER SI HRU</p>
         <h2>Oddýchni si s matematikou</h2>
         <p>Pokojné hry bez času, bodov a porovnávania.</p>
-        <div className="chill-cards">
-          <button className="crystal-game-card" onClick={onSudoku} aria-label="Hrať Sudoku Kryštálová mriežka">
-            <span className="crystal-copy">
-              <small>Sudoku</small>
-              <strong>
-                Kryštálová<br />mriežka
-              </strong>
-              <em>4×4 • 6×6 • 9×9</em>
+        <div className="game-cards">
+          <button className="game-card sudoku-card" onClick={onSudoku} aria-label="Hrať Sudoku Kryštálová mriežka">
+            <span className="game-card-copy">
+              <strong>Kryštálová mriežka</strong>
+              <span>Sudoku · 4×4, 6×6, 9×9</span>
             </span>
-            <img className="card-crystal-art" src="/talumi-crystal-grid-visual.png" alt="" aria-hidden="true" />
           </button>
 
-          <button className="crystal-game-card maze-card" onClick={onMaze} aria-label="Hrať Svetelné labyrinty">
-            <span className="crystal-copy">
-              <small>Bludiská</small>
-              <strong>
-                Svetelné<br />labyrinty
-              </strong>
-              <em>Nájdi správnu cestu</em>
+          <button className="game-card maze-card" onClick={onMaze} aria-label="Hrať Svetelné labyrinty">
+            <span className="game-card-copy">
+              <strong>Svetelné labyrinty</strong>
+              <span>Nájdi správnu cestu</span>
             </span>
-            <img className="card-crystal-art" src="/talumi-maze-card.png" alt="Svetelné labyrinty" />
           </button>
         </div>
       </section>

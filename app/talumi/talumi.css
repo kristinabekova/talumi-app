@@ -56,6 +56,8 @@
 .meteor-card{background-image:url('/talumi-meteor-game-card-bg.png')}
 .snake-card{background-image:url('/talumi-energy-snake-card-bg.png')}
 .reactor-card{background-image:url('/talumi-reactor-game-card-bg.png')}
+.sudoku-card{background-image:url('/talumi-crystal-grid-visual.png')}
+.maze-card{background-image:url('/talumi-maze-card.png')}
 .game-card-copy{position:absolute;z-index:2;top:28px;left:28px;display:block;max-width:76%;text-align:left;text-shadow:0 1px 0 rgba(255,255,255,.82)}
 .game-card-copy strong{display:block;margin:0 0 10px;font-size:clamp(25px,3.1vw,36px);line-height:1.05;font-weight:900;letter-spacing:-.02em}
 .game-card-copy span{display:block;font-size:clamp(15px,1.7vw,20px);line-height:1.35;font-weight:500;color:#66536f}

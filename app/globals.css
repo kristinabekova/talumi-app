@@ -123,16 +123,6 @@ button:focus-visible{outline:3px solid var(--turquoise);outline-offset:3px}
   text-align: left;
 }
 
-/* Rozostup kariet v Chill zóne */
-.chill-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 20px !important;
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
 /* Čisté zobrazenie Guľka bez sivého pozadia a tieňov */
 img[src*="talumi-gulko"],
 .gulko-img,
