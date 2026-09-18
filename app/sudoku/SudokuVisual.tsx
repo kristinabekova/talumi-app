@@ -4,8 +4,14 @@ export function CrystalVisual({ mini = false }: { mini?: boolean }) {
   </div>;
 }
 
+const FRAME_THUMB: Record<4 | 6 | 9, string> = {
+  4: "/sudoku-frame-4x4.png",
+  6: "/sudoku-frame-6x6.png",
+  9: "/sudoku-frame-9x9.png",
+};
+
 export function MiniGrid({ size }: { size: 4 | 6 | 9 }) {
-  return <span className="mini-sudoku" style={{ gridTemplateColumns: `repeat(${size},1fr)` }} aria-hidden="true">
-    {Array.from({ length: size * size }, (_, i) => <i key={i} />)}
+  return <span className="mini-sudoku" aria-hidden="true">
+    <img src={FRAME_THUMB[size]} alt="" draggable={false} />
   </span>;
 }

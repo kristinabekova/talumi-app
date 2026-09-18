@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { loadGame } from "./engine";
 import { MiniGrid, CrystalVisual } from "./SudokuVisual";
 import { SIZE_META, type SudokuSize } from "./types";
+import { TalumiLogo } from "../talumi/TalumiLogo";
 
 export function SizePicker({ onStart }: { onStart: (size: SudokuSize, resume: boolean) => void }) {
   const [saved, setSaved] = useState<Record<number, boolean>>({});
@@ -22,7 +23,7 @@ export function HowToPlay({ onClose }: { onClose: () => void }) {
 export function SudokuIntro({ onBack, onStart }: { onBack: () => void; onStart: (size: SudokuSize, resume: boolean) => void }) {
   const [how, setHow] = useState(false);
   return <main className="sudoku-page"><header className="sudoku-top"><button onClick={onBack}>← <span>Späť do Chill zóny</span></button><b>TALUMI</b><span /></header>
-    <section className="sudoku-intro"><div className="sudoku-title"><p className="sudoku-kicker">TALUMI • SUDOKU</p><h1>Kryštálová mriežka</h1><h2>Pokojná chvíľa s číslami</h2><p>Vyber si veľkosť mriežky a dopĺňaj čísla vlastným tempom.</p><button className="rules-link" onClick={() => setHow(true)}>Ako hrať</button></div><CrystalVisual /></section>
+    <section className="sudoku-intro"><div className="sudoku-title"><TalumiLogo className="sudoku-intro-logo" /><h1>Kryštálová mriežka</h1><h2>Pokojná chvíľa s číslami</h2><p>Vyber si veľkosť mriežky a dopĺňaj čísla vlastným tempom.</p><button className="rules-link" onClick={() => setHow(true)}>Ako hrať</button></div><CrystalVisual /></section>
     <SizePicker onStart={onStart} />{how && <HowToPlay onClose={() => setHow(false)} />}
   </main>;
 }
