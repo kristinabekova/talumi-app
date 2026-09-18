@@ -5,6 +5,7 @@ import { clearGame, conflictsFor, generatePuzzle, loadGame, saveGame } from "./e
 import { SudokuGrid } from "./SudokuGrid";
 import { HowToPlay } from "./SudokuIntro";
 import { SIZE_META, type SavedSudoku, type SudokuSize, type SudokuSnapshot } from "./types";
+import { GameHintButton, GamePauseOverlay, GameTopBar } from "../talumi/GameChrome";
 
 const snapshot = (game: SavedSudoku): SudokuSnapshot => ({ values: [...game.values], notes: game.notes.map(n => [...n]), hints: [...game.hints] });
 
@@ -25,6 +26,7 @@ export default function SudokuGame({ size, resume, onBack, onChooseSize }: { siz
   const [showComplete, setShowComplete] = useState(false);
   const [checkedWrong, setCheckedWrong] = useState<Set<number>>(new Set());
   const [sound, setSound] = useState(true);
+  const [paused, setPaused] = useState(false);
 
   const freshGame = useCallback(() => {
     const { puzzle, solution } = generatePuzzle(size);
@@ -60,7 +62,7 @@ export default function SudokuGame({ size, resume, onBack, onChooseSize }: { siz
   useEffect(() => { document.querySelector<HTMLButtonElement>(`.sudoku-cell[data-index="${selected}"]`)?.focus({ preventScroll: true }); }, [selected]);
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (showRules || showComplete) return;
+      if (showRules || showComplete || paused) return;
       if (/^[1-9]$/.test(event.key) && Number(event.key) <= size) { event.preventDefault(); enter(Number(event.key)); }
       else if (event.key === "Backspace" || event.key === "Delete") { event.preventDefault(); erase(); }
       else if (event.key === "ArrowUp") { event.preventDefault(); move(-1, 0); }
@@ -70,7 +72,7 @@ export default function SudokuGame({ size, resume, onBack, onChooseSize }: { siz
       else if (event.key === "Tab") { event.preventDefault(); setSelected(index => (index + (event.shiftKey ? -1 : 1) + size * size) % (size * size)); }
     };
     window.addEventListener("keydown", handler); return () => window.removeEventListener("keydown", handler);
-  }, [enter, move, showRules, showComplete, size]);
+  }, [enter, move, showRules, showComplete, paused, size]);
 
   const erase = () => { if (!game || game.puzzle[selected] || (!game.values[selected] && !game.notes[selected].length)) return; commit(next => { next.values[selected] = 0; next.notes[selected] = []; next.hints[selected] = false; }, "Políčko je opäť prázdne."); };
   const undo = () => setGame(current => { if (!current?.history.length) return current; const previous = current.history.at(-1)!; return { ...current, ...previous, history: current.history.slice(0, -1), future: [snapshot(current), ...current.future] }; });
@@ -82,12 +84,15 @@ export default function SudokuGame({ size, resume, onBack, onChooseSize }: { siz
   useEffect(() => { if (conflicts.size) setMessage("Toto číslo sa už v tejto časti nachádza."); }, [conflicts.size]);
   if (!game) return <main className="sudoku-page sudoku-loading"><div className="crystal-spinner">✦</div><p>Pripravujem kryštálovú mriežku…</p></main>;
   const completed = Array.from({ length: size }, (_, i) => i + 1).filter(n => game.values.filter(v => v === n).length === size);
-  return <main className="sudoku-page game-mode"><header className="sudoku-top"><button onClick={onBack}>← <span>Späť do Chill zóny</span></button><b>Kryštálová mriežka</b><span>{SIZE_META[size].label}</span></header>
+  return <main className="sudoku-page game-mode">
+    <GameTopBar title="Kryštálová mriežka" onBack={onBack} onPause={() => setPaused(true)} />
     <section className="sudoku-game"><div className="game-heading"><p className="sudoku-kicker">SUDOKU • {SIZE_META[size].mood.toUpperCase()}</p><h1>Kryštálová mriežka</h1><p className={conflicts.size ? "game-message warning" : "game-message"} role="status">{conflicts.size ? "⚠ " : "✦ "}{message}</p></div>
       <div className="grid-wrap"><SudokuGrid size={size} puzzle={game.puzzle} values={game.values} notes={game.notes} hints={game.hints} selected={selected} conflicts={conflicts} checkedWrong={checkedWrong} onSelect={setSelected} /></div>
       <aside className="sudoku-controls"><NumberPad size={size} onNumber={enter} completed={completed} /><Toolbar notesMode={notesMode} canUndo={!!game.history.length} canRedo={!!game.future.length} onNotes={() => setNotesMode(v => !v)} onErase={erase} onUndo={undo} onRedo={redo} onHint={hint} onNew={startNew} onRules={() => setShowRules(true)} onCheck={check} sound={sound} onSound={() => setSound(v => !v)} /></aside>
     </section>
+    <GameHintButton onClick={hint} />
     {showRules && <HowToPlay onClose={() => setShowRules(false)} />}
+    {paused && <GamePauseOverlay onResume={() => setPaused(false)} />}
     {showComplete && <div className="sudoku-overlay" role="dialog" aria-modal="true"><section className="complete-card"><div className="complete-gem">✦</div><p className="sudoku-kicker">MRIEŽKA JE DOKONČENÁ</p><h2>Výborne, kryštálová mriežka zažiarila.</h2><p>Každé číslo si našlo svoje miesto.</p><button className="sudoku-primary" onClick={freshGame}>Nová mriežka</button><button onClick={onChooseSize}>Vybrať inú veľkosť</button><button onClick={onBack}>Späť do Chill zóny</button></section></div>}
   </main>;
 }
