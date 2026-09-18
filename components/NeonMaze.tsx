@@ -147,7 +147,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     } catch {}
   };
 
-  const generateComplexMaze = (size: number) => {
+  const generateComplexMaze = (size: number, branchChance: number) => {
     const grid: Cell[][] = [];
     for (let r = 0; r < size; r++) {
       grid[r] = [];
@@ -162,7 +162,7 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     stack.push([0, 0]);
 
     while (stack.length > 0) {
-      const idx = Math.random() < 0.5 ? Math.floor(Math.random() * stack.length) : stack.length - 1;
+      const idx = Math.random() < branchChance ? Math.floor(Math.random() * stack.length) : stack.length - 1;
       const [cr, cc] = stack[idx];
 
       const neighbors: { r: number; c: number; dir: "top" | "right" | "bottom" | "left" }[] = [];
@@ -199,7 +199,9 @@ export default function NeonMaze({ onBack }: NeonMazeProps) {
     const cappedSize = targetLevel <= 4 ? 6 : targetLevel <= 8 ? 7 : targetLevel <= 13 ? 8 : 9;
     setGridSize(cappedSize);
 
-    const newMaze = generateComplexMaze(cappedSize);
+    // DFS vetvenie rastie s náročnosťou: 6×6→35 %, 7×7→45 %, 8×8→55 %, 9×9→65 %
+    const branchChance = 0.35 + (cappedSize - 6) * 0.1;
+    const newMaze = generateComplexMaze(cappedSize, branchChance);
     mazeRef.current = newMaze;
     setMaze(newMaze);
 
