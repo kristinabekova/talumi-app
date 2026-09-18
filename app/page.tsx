@@ -10,7 +10,7 @@ import { AvatarSelect, type AvatarId } from "./talumi/AvatarSelect";
 import { Bunker } from "./talumi/Bunker";
 import { SkolskaCast } from "./talumi/SkolskaCast";
 import { MojSatnik } from "./talumi/MojSatnik";
-import { ReactorGame } from "./talumi/ReactorGame";
+import { ReactorGame } from "./talumi/reactor/ReactorGame";
 
 const AVATAR_STORAGE_KEY = "talumi_avatar";
 
