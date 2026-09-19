@@ -40,16 +40,32 @@ function template(size: number, axis: Axis) {
   return parts.join(" ");
 }
 
+// Digit height as a share of the cell, so numbers scale with the artwork instead of the viewport.
+const DIGIT_TO_CELL: Record<SudokuSize, number> = { 4: 0.5, 6: 0.62, 9: 0.9 };
+
+// The artwork is the outer box; the cells live in an inner box inset by percentages of the
+// outer box itself, so the overlay stays glued to the art at any rendered size.
 export function frameStyle(size: SudokuSize): CSSProperties {
   const geo = FRAME_GEOMETRY[size];
+  const digitCqw = (Math.min(geo.col.cell, geo.row.cell) / geo.imgW) * 100 * DIGIT_TO_CELL[size];
   return {
+    ["--digit" as string]: `${digitCqw.toFixed(2)}cqw`,
+    position: "relative",
     backgroundImage: `url(${geo.image})`,
     backgroundSize: "100% 100%",
     aspectRatio: `${geo.imgW} / ${geo.imgH}`,
-    paddingTop: `${(geo.row.margin1 / geo.imgH) * 100}%`,
-    paddingBottom: `${(geo.row.margin2 / geo.imgH) * 100}%`,
-    paddingLeft: `${(geo.col.margin1 / geo.imgW) * 100}%`,
-    paddingRight: `${(geo.col.margin2 / geo.imgW) * 100}%`,
+  };
+}
+
+export function cellsStyle(size: SudokuSize): CSSProperties {
+  const geo = FRAME_GEOMETRY[size];
+  return {
+    position: "absolute",
+    display: "grid",
+    top: `${(geo.row.margin1 / geo.imgH) * 100}%`,
+    bottom: `${(geo.row.margin2 / geo.imgH) * 100}%`,
+    left: `${(geo.col.margin1 / geo.imgW) * 100}%`,
+    right: `${(geo.col.margin2 / geo.imgW) * 100}%`,
     gridTemplateColumns: template(size, geo.col),
     gridTemplateRows: template(size, geo.row),
   };

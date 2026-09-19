@@ -1,4 +1,4 @@
-import { cellPlacement, frameStyle } from "./frameGeometry";
+import { cellPlacement, cellsStyle, frameStyle } from "./frameGeometry";
 import { SIZE_META, type SudokuSize } from "./types";
 
 type Props = {
@@ -24,6 +24,6 @@ export function SudokuCell({ index, ...props }: Props & { index: number }) {
 
 export function SudokuGrid(props: Props) {
   return <div className={`sudoku-grid size-${props.size}`} style={frameStyle(props.size)} role="grid" aria-label={`Sudoku ${props.size} krát ${props.size}`}>
-    {props.values.map((_, index) => <SudokuCell key={index} index={index} {...props} />)}
+    <div style={cellsStyle(props.size)}>{props.values.map((_, index) => <SudokuCell key={index} index={index} {...props} />)}</div>
   </div>;
 }

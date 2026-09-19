@@ -5,6 +5,7 @@ import { clearGame, conflictsFor, generatePuzzle, loadGame, saveGame } from "./e
 import { SudokuGrid } from "./SudokuGrid";
 import { SIZE_META, type SavedSudoku, type SudokuSize, type SudokuSnapshot } from "./types";
 import { GameHintButton, GamePauseOverlay, GameTopBar } from "../talumi/GameChrome";
+import { Lumi } from "../talumi/Lumi";
 
 const snapshot = (game: SavedSudoku): SudokuSnapshot => ({ values: [...game.values], notes: game.notes.map(n => [...n]), hints: [...game.hints] });
 
@@ -12,8 +13,8 @@ function NumberPad({ size, onNumber, completed }: { size: SudokuSize; onNumber: 
   return <div className="number-pad" aria-label="Číselná klávesnica">{Array.from({ length: size }, (_, i) => i + 1).map(n => <button key={n} className={completed.includes(n) ? "complete-number" : ""} onClick={() => onNumber(n)}>{n}</button>)}</div>;
 }
 
-function Toolbar({ canUndo, onErase, onUndo, onHint, onNew, onCheck }: { canUndo: boolean; onErase: () => void; onUndo: () => void; onHint: () => void; onNew: () => void; onCheck: () => void }) {
-  return <div className="sudoku-toolbar"><button onClick={onErase}>⌫ Vymazať</button><button onClick={onUndo} disabled={!canUndo}>↶ Späť</button><button onClick={onHint}>✦ Pomôcka</button><button onClick={onCheck}>✓ Skontrolovať</button><button onClick={onNew}>＋ Nová mriežka</button></div>;
+function Toolbar({ canUndo, onErase, onUndo, onNew, onCheck }: { canUndo: boolean; onErase: () => void; onUndo: () => void; onNew: () => void; onCheck: () => void }) {
+  return <div className="sudoku-toolbar"><button onClick={onErase}>⌫ Vymazať</button><button onClick={onUndo} disabled={!canUndo}>↶ Späť</button><button onClick={onCheck}>✓ Skontrolovať</button><button onClick={onNew}>＋ Nová mriežka</button></div>;
 }
 
 export default function SudokuGame({ size, resume, onBack, onChooseSize }: { size: SudokuSize; resume: boolean; onBack: () => void; onChooseSize: () => void }) {
@@ -83,9 +84,10 @@ export default function SudokuGame({ size, resume, onBack, onChooseSize }: { siz
     <GameTopBar title="Kryštálová mriežka" onBack={onBack} onPause={() => setPaused(true)} sound={sound} onToggleSound={() => setSound(v => !v)} />
     <section className="sudoku-game"><div className="game-heading"><p className="sudoku-kicker">SUDOKU • {SIZE_META[size].mood.toUpperCase()}</p><h1>Kryštálová mriežka</h1><p className={conflicts.size ? "game-message warning" : "game-message"} role="status">{conflicts.size ? "⚠ " : "✦ "}{message}</p></div>
       <div className="grid-wrap"><SudokuGrid size={size} puzzle={game.puzzle} values={game.values} notes={game.notes} hints={game.hints} selected={selected} conflicts={conflicts} checkedWrong={checkedWrong} onSelect={setSelected} /></div>
-      <aside className="sudoku-controls"><NumberPad size={size} onNumber={enter} completed={completed} /><Toolbar canUndo={!!game.history.length} onErase={erase} onUndo={undo} onHint={hint} onNew={startNew} onCheck={check} /></aside>
+      <aside className="sudoku-controls"><NumberPad size={size} onNumber={enter} completed={completed} /><Toolbar canUndo={!!game.history.length} onErase={erase} onUndo={undo} onNew={startNew} onCheck={check} /></aside>
     </section>
     <GameHintButton onClick={hint} />
+    <Lumi className={showComplete ? "sudoku-lumi sudoku-lumi--win" : "sudoku-lumi"} alt="" />
     {paused && <GamePauseOverlay onResume={() => setPaused(false)} />}
     {showComplete && <div className="sudoku-overlay" role="dialog" aria-modal="true"><section className="complete-card"><div className="complete-gem">✦</div><p className="sudoku-kicker">MRIEŽKA JE DOKONČENÁ</p><h2>Výborne, kryštálová mriežka zažiarila.</h2><p>Každé číslo si našlo svoje miesto.</p><button className="sudoku-primary" onClick={freshGame}>Nová mriežka</button><button onClick={onChooseSize}>Vybrať inú veľkosť</button><button onClick={onBack}>Späť do Chill zóny</button></section></div>}
   </main>;
