@@ -1,7 +1,13 @@
 :root {
-  --chrome-navy: #0a1e3f;
-  --chrome-navy-deep: #071630;
-  --chrome-cyan: #2fd0ff;
+  /* Perleťová keramika so žiarivou tyrkysovou hranou (farby podľa referenčného obrázka) */
+  --chrome-pearl-top: #ffffff;
+  --chrome-pearl-mid: #eff3f9;
+  --chrome-pearl-bot: #d8e1ee;
+  --chrome-lip: #b6c4d8;
+  --chrome-glow: #3fc9ff;
+  --chrome-glow-soft: rgba(63, 201, 255, .5);
+  --chrome-ink: #1b4fa8;
+  --chrome-ink-light: #1e9de6;
 }
 
 /* Jednotné horné/dolné menu naprieč hrami */
@@ -11,7 +17,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 14px 16px 18px;
   max-width: 720px;
   margin: 0 auto;
 }
@@ -20,15 +26,30 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  border: 2px solid var(--chrome-cyan);
-  background: radial-gradient(circle at 35% 30%, #123a6b, var(--chrome-navy) 70%);
-  color: #eaf6ff;
+  border: 2px solid var(--chrome-glow);
+  background: radial-gradient(circle at 35% 25%, var(--chrome-pearl-top) 0%, var(--chrome-pearl-mid) 58%, var(--chrome-pearl-bot) 100%);
+  color: var(--chrome-ink);
   font-size: 24px;
   font-weight: 900;
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(47, 208, 255, .55), inset 0 0 8px rgba(47, 208, 255, .35);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .95),
+    inset 0 -3px 0 rgba(110, 140, 185, .22),
+    0 4px 0 var(--chrome-lip),
+    0 0 12px var(--chrome-glow-soft),
+    0 9px 12px rgba(40, 70, 120, .16);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.game-chrome-circle:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .9),
+    inset 0 -2px 0 rgba(110, 140, 185, .2),
+    0 1px 0 var(--chrome-lip),
+    0 0 10px var(--chrome-glow-soft),
+    0 3px 6px rgba(40, 70, 120, .14);
 }
 .game-chrome-circle--ghost {
   visibility: hidden;
@@ -37,17 +58,18 @@
 }
 .game-chrome-sound {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 1px solid rgba(47, 208, 255, .45);
-  background: rgba(10, 30, 63, .55);
-  color: #eaf6ff;
-  font-size: 13px;
+  border: 1px solid var(--chrome-glow);
+  background: linear-gradient(180deg, var(--chrome-pearl-top), var(--chrome-pearl-bot));
+  color: var(--chrome-ink);
+  font-size: 14px;
   display: grid;
   place-items: center;
   cursor: pointer;
-  opacity: .8;
+  box-shadow: 0 2px 0 var(--chrome-lip), 0 0 8px rgba(63, 201, 255, .35);
+  opacity: .92;
 }
 .game-chrome-sound:hover {
   opacity: 1;
@@ -57,9 +79,9 @@
   min-width: 0;
   height: 52px;
   border-radius: 999px;
-  border: 2px solid var(--chrome-cyan);
-  background: linear-gradient(180deg, #0f2c58, var(--chrome-navy-deep));
-  color: #eaf6ff;
+  border: 2px solid var(--chrome-glow);
+  background: linear-gradient(180deg, var(--chrome-pearl-top) 0%, var(--chrome-pearl-mid) 55%, var(--chrome-pearl-bot) 100%);
+  color: var(--chrome-ink);
   font-weight: 900;
   font-size: 16px;
   display: flex;
@@ -67,7 +89,12 @@
   justify-content: center;
   gap: 8px;
   padding: 0 18px;
-  box-shadow: 0 0 14px rgba(47, 208, 255, .45), inset 0 0 10px rgba(47, 208, 255, .3);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .95),
+    inset 0 -3px 0 rgba(110, 140, 185, .2),
+    0 4px 0 var(--chrome-lip),
+    0 0 14px var(--chrome-glow-soft),
+    0 9px 12px rgba(40, 70, 120, .16);
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -81,8 +108,7 @@
   flex: none;
   font-weight: 800;
   font-size: 12px;
-  color: var(--chrome-cyan);
-  opacity: .95;
+  color: var(--chrome-ink-light);
 }
 
 .game-chrome-hint {
@@ -90,16 +116,32 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin: 22px auto 0;
+  margin: 22px auto 8px;
   padding: 13px 28px;
   border-radius: 999px;
-  border: 2px solid var(--chrome-cyan);
-  background: linear-gradient(180deg, #0f2c58, var(--chrome-navy-deep));
-  color: #eaf6ff;
+  border: 2px solid var(--chrome-glow);
+  background: linear-gradient(180deg, var(--chrome-pearl-top) 0%, var(--chrome-pearl-mid) 55%, var(--chrome-pearl-bot) 100%);
+  color: var(--chrome-ink);
+  font-family: inherit;
   font-weight: 900;
   font-size: 15px;
   cursor: pointer;
-  box-shadow: 0 0 14px rgba(47, 208, 255, .45), inset 0 0 10px rgba(47, 208, 255, .3);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .95),
+    inset 0 -3px 0 rgba(110, 140, 185, .2),
+    0 4px 0 var(--chrome-lip),
+    0 0 14px var(--chrome-glow-soft),
+    0 9px 12px rgba(40, 70, 120, .16);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.game-chrome-hint:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .9),
+    inset 0 -2px 0 rgba(110, 140, 185, .2),
+    0 1px 0 var(--chrome-lip),
+    0 0 10px var(--chrome-glow-soft),
+    0 3px 6px rgba(40, 70, 120, .14);
 }
 .game-chrome-hint-icon { font-size: 17px; }
 
@@ -107,7 +149,7 @@
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(5, 15, 35, .72);
+  background: rgba(38, 62, 110, .38);
   backdrop-filter: blur(6px);
   display: grid;
   place-items: center;
@@ -116,12 +158,16 @@
 .game-chrome-pause-card {
   width: min(360px, 100%);
   border-radius: 28px;
-  border: 2px solid var(--chrome-cyan);
-  background: linear-gradient(180deg, #0f2c58, var(--chrome-navy-deep));
-  color: #eaf6ff;
+  border: 2px solid var(--chrome-glow);
+  background: linear-gradient(180deg, var(--chrome-pearl-top) 0%, var(--chrome-pearl-mid) 60%, var(--chrome-pearl-bot) 100%);
+  color: var(--chrome-ink);
   text-align: center;
   padding: 34px 24px;
-  box-shadow: 0 0 24px rgba(47, 208, 255, .4);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .95),
+    0 6px 0 var(--chrome-lip),
+    0 0 26px var(--chrome-glow-soft),
+    0 20px 30px rgba(20, 40, 90, .25);
 }
 .game-chrome-pause-icon {
   margin: 0 auto 12px;
@@ -130,10 +176,13 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  border: 2px solid var(--chrome-cyan);
+  border: 2px solid var(--chrome-glow);
+  background: radial-gradient(circle at 35% 25%, var(--chrome-pearl-top), var(--chrome-pearl-bot));
+  color: var(--chrome-ink);
   font-size: 20px;
+  box-shadow: 0 3px 0 var(--chrome-lip), 0 0 10px var(--chrome-glow-soft);
 }
-.game-chrome-pause-card h2 { margin: 0 0 20px; font-size: 22px; }
+.game-chrome-pause-card h2 { margin: 0 0 22px; font-size: 22px; }
 .game-chrome-pause-card .game-chrome-hint { margin: 0 auto; }
 
 @media (max-width: 600px) {
