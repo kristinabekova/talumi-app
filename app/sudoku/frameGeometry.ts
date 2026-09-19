@@ -10,24 +10,24 @@ type FrameGeometry = { image: string; imgW: number; imgH: number; col: Axis; row
 export const FRAME_GEOMETRY: Record<SudokuSize, FrameGeometry> = {
   4: {
     image: "/sudoku-frame-4x4.png",
-    imgW: 708,
+    imgW: 707,
     imgH: 724,
-    col: { margin1: 114, margin2: 104, cell: 98.5, smallGap: 26, bigGap: 44, blockDim: 2 },
-    row: { margin1: 99, margin2: 131, cell: 114, smallGap: 6.5, bigGap: 23, blockDim: 2 },
+    col: { margin1: 128, margin2: 106, cell: 105.3, smallGap: 12, bigGap: 28, blockDim: 2 },
+    row: { margin1: 117, margin2: 141, cell: 102, smallGap: 15, bigGap: 28, blockDim: 2 },
   },
   6: {
     image: "/sudoku-frame-6x6.png",
-    imgW: 724,
+    imgW: 721,
     imgH: 724,
-    col: { margin1: 90, margin2: 96, cell: 84.2, smallGap: 6, bigGap: 9, blockDim: 3 },
-    row: { margin1: 84, margin2: 103, cell: 85.2, smallGap: 3.3, bigGap: 8, blockDim: 2 },
+    col: { margin1: 111, margin2: 110, cell: 72.3, smallGap: 10.5, bigGap: 24, blockDim: 3 },
+    row: { margin1: 108, margin2: 115, cell: 69.8, smallGap: 11.7, bigGap: 23.5, blockDim: 2 },
   },
   9: {
     image: "/sudoku-frame-9x9.png",
-    imgW: 722,
+    imgW: 717,
     imgH: 724,
-    col: { margin1: 79, margin2: 86, cell: 57.8, smallGap: 3.2, bigGap: 9, blockDim: 3 },
-    row: { margin1: 71, margin2: 97, cell: 57.9, smallGap: 3, bigGap: 8.5, blockDim: 3 },
+    col: { margin1: 105, margin2: 103, cell: 46.4, smallGap: 8.8, bigGap: 19, blockDim: 3 },
+    row: { margin1: 104, margin2: 115, cell: 45.6, smallGap: 9.5, bigGap: 19, blockDim: 3 },
   },
 };
 
