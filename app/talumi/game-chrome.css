@@ -189,3 +189,21 @@
   .game-chrome-circle { width: 44px; height: 44px; font-size: 20px; }
   .game-chrome-title { height: 44px; font-size: 14px; padding: 0 12px; }
 }
+
+/* Spoločná hlavička v hrách s vlastným rozložením (Meteorický dážď, Energický had, Neónové bubliny) */
+.meteor-topbar { grid-column: 1 / -1; position: relative; z-index: 10; }
+.snake-topbar { position: relative; z-index: 40; }
+.meteor-topbar .game-chrome-top,
+.snake-topbar .game-chrome-top { padding: 10px 16px; }
+@media (max-width: 700px) {
+  .meteor-topbar .game-chrome-top,
+  .snake-topbar .game-chrome-top { padding: 7px 12px; }
+}
+@media (max-height: 650px) and (orientation: landscape) {
+  .meteor-topbar .game-chrome-top,
+  .snake-topbar .game-chrome-top { padding: 2px 12px; }
+}
+
+/* Série, tempo a mince v Meteorickom daždi sú teraz pod hlavičkou na všetkých veľkostiach */
+.meteor-app .mobile-stats { height: 36px; display: flex; align-items: center; justify-content: center; gap: 7px; }
+.meteor-app .mobile-stats > span { height: 30px; padding: 0 9px; border-radius: 16px; background: var(--lav-2); display: flex; align-items: center; gap: 4px; color: var(--purple); font-size: 12px; }

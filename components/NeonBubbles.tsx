@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { SoundToggle } from "@/app/talumi/GameChrome";
+import { GameTopBar } from "@/app/talumi/GameChrome";
 import { Lumi } from "@/app/talumi/Lumi";
 
 interface NeonBubblesProps {
@@ -230,17 +230,18 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
       onTouchEnd={handleEndDrag}
     >
       {/* Horná lišta */}
-      <header className="neon-top-bar">
-        <button className="back-btn" onClick={onBack} aria-label="Späť na výber zón">
-          ←
-        </button>
-        <h1 className="game-title">Neónové bubliny</h1>
-        <div className="game-status-pills">
-          <span className="pill">LEVEL <b>{level}</b></span>
-          <span className="pill gold">SKÓRE <b>{score}</b></span>
-          <SoundToggle on={soundOn} onClick={() => setSoundOn((v) => !v)} className="bubbles-sound" />
-        </div>
-      </header>
+      <div className="bubbles-topbar">
+        <GameTopBar
+          title="Neónové bubliny"
+          onBack={onBack ?? (() => {})}
+          sound={soundOn}
+          onToggleSound={() => setSoundOn((v) => !v)}
+        />
+      </div>
+      <div className="game-status-pills">
+        <span className="pill">LEVEL <b>{level}</b></span>
+        <span className="pill gold">SKÓRE <b>{score}</b></span>
+      </div>
 
       {/* Hlavná herná plocha */}
       <main className="neon-game-area">
@@ -371,9 +372,15 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
           margin: 0;
         }
 
+        .bubbles-topbar {
+          margin: -16px -16px 0;
+        }
+
         .game-status-pills {
           display: flex;
+          justify-content: center;
           gap: 8px;
+          margin: 0 0 6px;
         }
 
         .pill {
