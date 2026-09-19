@@ -17,7 +17,7 @@ const AVATAR_STORAGE_KEY = "talumi_avatar";
 type AppView = "avatar" | "zones" | "games" | "meteor" | "snake" | "bubbles" | "reactor" | "chill" | "sudoku" | "maze" | "skola" | "satnik";
 
 function DecorativePictograms({ view }: { view: AppView }) {
-  const icons = ["spark", "ring", "eye", "puzzle", "star"];
+  const icons = ["spark_cluster", "ring_oval", "eye_single", "puzzle", "star_hollow"];
   return (
     <div className={`talumi-pictograms talumi-pictograms--${view}`} aria-hidden="true">
       {icons.map((icon, index) => (
