@@ -6,6 +6,7 @@ import "./talumi/game-chrome.css";
 import "./talumi/reactor/reactor.css";
 import "./sudoku/sudoku.css";
 import "./globals.css";
+import "./talumi/soft-buttons.css";
 
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage-grotesque",

@@ -16,7 +16,7 @@ export function SizePicker({ onStart }: { onStart: (size: SudokuSize, resume: bo
 
 export function HowToPlay({ onClose }: { onClose: () => void }) {
   return <div className="sudoku-overlay" role="dialog" aria-modal="true" aria-labelledby="how-title"><section className="how-card"><p className="sudoku-kicker">JEDNODUCHÉ PRAVIDLÁ</p><h2 id="how-title">Ako hrať</h2><p>Doplň čísla tak, aby sa v žiadnom riadku, stĺpci ani zvýraznenom bloku neopakovali. Predvyplnené čísla zostávajú na svojom mieste. Hraj pokojne a bez časového obmedzenia.</p>
-    <div className="how-demo"><span className="demo-cell given"><b>3</b><small>predvyplnené</small></span><span className="demo-cell selected"><small>vybrané</small></span><span className="demo-cell player"><b>2</b><small>doplnené</small></span><span className="demo-cell"><i>1 4</i><small>poznámka</small></span><span className="demo-cell conflict"><b>3 !</b><small>konflikt</small></span></div>
+    <div className="how-demo"><span className="demo-cell given"><b>3</b><small>predvyplnené</small></span><span className="demo-cell selected"><small>vybrané</small></span><span className="demo-cell player"><b>2</b><small>doplnené</small></span><span className="demo-cell conflict"><b>3 !</b><small>konflikt</small></span></div>
     <p className="calm-note">Každé políčko má svoje miesto. Dopraj si chvíľu na premyslenie.</p><button className="sudoku-primary" onClick={onClose}>ROZUMIEM</button></section></div>;
 }
 

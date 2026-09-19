@@ -1,0 +1,86 @@
+/* Jednotný štýl akčných tlačidiel: pastelové farby z palety (tyrkysová / modrá / fialová),
+   plná "pilulka" a 3D hrana, ktorá sa pri stlačení zatlačí. */
+
+/* --- základ (tvar + 3D) --- */
+body button.button.primary-button,
+body button.button.secondary-button,
+body .size-actions button,
+body .size-actions button.start,
+body button.rules-link,
+body button.sudoku-primary,
+body .sudoku-overlay .complete-card > button,
+body .modal button.primary,
+body button.reactor-region-start,
+body button.soft-btn {
+  --top: #d9fffb; --mid: #b9fbf4; --bot: #93f2e6;
+  --edge: #5fd3c6; --edge-soft: rgba(40, 150, 140, .26); --ink: #0f5f5a;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 999px;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--top) 0%, var(--mid) 55%, var(--bot) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .9),
+    inset 0 -3px 0 rgba(0, 0, 0, .07),
+    0 5px 0 var(--edge),
+    0 10px 15px var(--edge-soft);
+  font-family: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+body button.button.primary-button:hover,
+body button.button.secondary-button:hover,
+body .size-actions button:hover,
+body .size-actions button.start:hover,
+body button.rules-link:hover,
+body button.sudoku-primary:hover,
+body .sudoku-overlay .complete-card > button:hover,
+body .modal button.primary:hover,
+body button.reactor-region-start:hover,
+body button.soft-btn:hover {
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+}
+body button.button.primary-button:active,
+body button.button.secondary-button:active,
+body .size-actions button:active,
+body .size-actions button.start:active,
+body button.rules-link:active,
+body button.sudoku-primary:active,
+body .sudoku-overlay .complete-card > button:active,
+body .modal button.primary:active,
+body button.reactor-region-start:active,
+body button.soft-btn:active {
+  transform: translateY(4px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .8),
+    inset 0 -2px 0 rgba(0, 0, 0, .06),
+    0 1px 0 var(--edge),
+    0 3px 7px var(--edge-soft);
+}
+body .size-actions button:disabled,
+body button.soft-btn:disabled { opacity: .5; cursor: default; }
+
+/* --- modrá --- */
+body .size-actions button:not(.start),
+body .sudoku-overlay .complete-card > button:nth-of-type(2) {
+  --top: #eef3ff; --mid: #c9dcff; --bot: #a4c1ff;
+  --edge: #7ea3f0; --edge-soft: rgba(70, 110, 210, .26); --ink: #27499a;
+}
+
+/* --- fialová --- */
+body button.button.secondary-button,
+body button.rules-link,
+body .sudoku-overlay .complete-card > button:nth-of-type(3),
+body button.soft-btn.soft-purple {
+  --top: #faf0ff; --mid: #eec7ff; --bot: #dc9bff;
+  --edge: #c47ce9; --edge-soft: rgba(160, 80, 210, .26); --ink: #6d2a9a;
+}
+
+/* --- rozmery jednotlivých kontextov --- */
+body .size-actions button { min-height: 44px; margin-bottom: 5px; }
+body .sudoku-overlay .complete-card > button { width: 100%; margin-top: 14px; min-height: 50px; font-size: 16px; }
+body .sudoku-overlay .complete-card > button.sudoku-primary { min-height: 54px; }
+body button.reactor-region-start { margin-bottom: 5px; }
+body .modal button.primary { border-radius: 999px; }
