@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { SoundToggle } from "@/app/talumi/GameChrome";
+import { Lumi } from "@/app/talumi/Lumi";
 
 interface NeonBubblesProps {
   onBack?: () => void;
@@ -303,13 +304,9 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
           </div>
         </div>
 
-        {/* GUĽKO MASKOT */}
+        {/* LUMI MASKOT */}
         <div className={`gulko-mascot-wrapper ${isLevelCompleted ? "celebrate" : "floating"}`}>
-          <img
-            src={isLevelCompleted ? "/talumi-gulko-wave.png" : "/talumi-gulko-default.png"}
-            alt="Guľko maskot"
-            className="gulko-mascot-img"
-          />
+          <Lumi animated={false} alt="Lumi maskot" />
         </div>
       </main>
 
@@ -609,19 +606,18 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
 
         .gulko-mascot-wrapper {
           position: absolute;
-          bottom: -10px;
-          right: 0px;
-          width: 105px;
-          height: 105px;
+          bottom: -14px;
+          right: -4px;
+          width: 130px;
+          height: 130px;
           pointer-events: none;
           z-index: 5;
         }
 
-        .gulko-mascot-img {
+        .gulko-mascot-wrapper .lumi-mascot {
           width: 100%;
           height: 100%;
           object-fit: contain;
-          filter: drop-shadow(0 8px 16px rgba(51, 0, 91, 0.18));
         }
 
         .gulko-mascot-wrapper.floating {
@@ -670,10 +666,10 @@ export default function NeonBubbles({ onBack }: NeonBubblesProps) {
             font-size: 30px;
           }
           .gulko-mascot-wrapper {
-            width: 75px;
-            height: 75px;
-            bottom: -5px;
-            right: -5px;
+            width: 96px;
+            height: 96px;
+            bottom: -8px;
+            right: -8px;
           }
         }
       `}</style>
