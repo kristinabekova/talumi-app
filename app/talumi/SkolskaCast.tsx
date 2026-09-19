@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { GameTopBar } from "./GameChrome";
+import { Lumi } from "./Lumi";
 
 const WORLDS = [
   { id: 1, name: "Jaskynný svet" },
@@ -68,6 +69,8 @@ export function SkolskaCast({ onBack }: { onBack: () => void }) {
       <div className="skola-topbar">
         <GameTopBar title={current.name} onBack={onBack} />
       </div>
+
+      <Lumi className="skola-lumi" alt="" />
 
       <nav className="skola-worlds" aria-label="Výber sveta">
         {WORLDS.map((w) => (

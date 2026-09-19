@@ -107,3 +107,13 @@
 @media (prefers-reduced-motion: reduce) {
   .skola-bg { animation: none; }
 }
+
+/* Lumi vpravo dole, nad panelom so svetmi */
+.skola-lumi {
+  position: absolute;
+  right: max(8px, calc(50% - 252px));
+  bottom: calc(max(12px, env(safe-area-inset-bottom)) + 84px);
+  width: 76px;
+  z-index: 2;
+  pointer-events: none;
+}
