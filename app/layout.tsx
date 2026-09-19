@@ -4,6 +4,7 @@ import "./talumi/talumi.css";
 import "./talumi/bunker.css";
 import "./talumi/game-chrome.css";
 import "./talumi/reactor/reactor.css";
+import "./talumi/skola.css";
 import "./sudoku/sudoku.css";
 import "./globals.css";
 import "./talumi/soft-buttons.css";
