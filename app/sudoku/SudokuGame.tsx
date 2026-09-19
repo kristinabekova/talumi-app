@@ -34,6 +34,7 @@ export default function SudokuGame({ size, resume, onBack, onChooseSize }: { siz
 
   useEffect(() => { const saved = resume ? loadGame(size) : null; if (saved) { setGame(saved); setSelected(Math.max(0, saved.puzzle.findIndex((v, i) => !v && !saved.values[i]))); } else freshGame(); }, [freshGame, resume, size]);
   useEffect(() => { if (game) saveGame(game); }, [game]);
+  useEffect(() => { new Image().src = "/sudoku-complete-crystal.png"; }, []);
 
   const tone = (kind: "place" | "hint" | "done") => {
     if (!sound) return;
@@ -89,7 +90,7 @@ export default function SudokuGame({ size, resume, onBack, onChooseSize }: { siz
     <GameHintButton onClick={hint} />
     <Lumi className={showComplete ? "sudoku-lumi sudoku-lumi--win" : "sudoku-lumi"} alt="" />
     {paused && <GamePauseOverlay onResume={() => setPaused(false)} />}
-    {showComplete && <div className="sudoku-overlay" role="dialog" aria-modal="true"><section className="complete-card"><div className="complete-gem">✦</div><p className="sudoku-kicker">MRIEŽKA JE DOKONČENÁ</p><h2>Výborne, kryštálová mriežka zažiarila.</h2><p>Každé číslo si našlo svoje miesto.</p><button className="sudoku-primary" onClick={freshGame}>Nová mriežka</button><button onClick={onChooseSize}>Vybrať inú veľkosť</button><button onClick={onBack}>Späť do Chill zóny</button></section></div>}
+    {showComplete && <div className="sudoku-overlay" role="dialog" aria-modal="true"><section className="complete-card"><img className="complete-crystal" src="/sudoku-complete-crystal.png" alt="" draggable={false} /><p className="sudoku-kicker">MRIEŽKA JE DOKONČENÁ</p><h2>Výborne, kryštálová mriežka zažiarila.</h2><p>Každé číslo si našlo svoje miesto.</p><button className="sudoku-primary" onClick={freshGame}>Nová mriežka</button><button onClick={onChooseSize}>Vybrať inú veľkosť</button><button onClick={onBack}>Späť do Chill zóny</button></section></div>}
   </main>;
 }
 
