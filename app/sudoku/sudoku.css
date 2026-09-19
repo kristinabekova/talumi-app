@@ -50,9 +50,10 @@
 .complete-crystal{display:block;height:190px;width:auto;margin:-26px auto -2px;pointer-events:none;user-select:none;animation:crystal-float 2.6s ease-in-out infinite alternate;filter:drop-shadow(0 8px 14px rgba(120,90,220,.28))}
 @keyframes crystal-float{from{transform:translateY(2px) scale(1)}to{transform:translateY(-7px) scale(1.04)}}
 @media(prefers-reduced-motion:reduce){.complete-crystal{animation:none}}
-.complete-card>button{position:relative;width:100%;margin-top:14px;font-family:inherit;font-weight:900;font-size:16px;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
-.complete-card>button.sudoku-primary{min-height:54px;border:1px solid rgba(255,255,255,.75);border-radius:27px;color:#1f5a63;background:linear-gradient(180deg,#d4f8f2 0%,#a2e9df 52%,#7fd8ce 100%);box-shadow:inset 0 2px 0 rgba(255,255,255,.85),inset 0 -3px 0 rgba(31,140,140,.22),0 5px 0 #62bdb4,0 10px 16px rgba(40,140,140,.26)}
-.complete-card>button:not(.sudoku-primary){min-height:48px;border:1px solid #e6dcf4;border-radius:24px;color:#5f4390;background:linear-gradient(180deg,#ffffff 0%,#f5eefc 55%,#ebe1f8 100%);box-shadow:inset 0 2px 0 #fff,inset 0 -3px 0 rgba(120,90,175,.14),0 4px 0 #d3c5e8,0 8px 13px rgba(90,60,140,.16)}
-.complete-card>button:hover{filter:brightness(1.03);transform:translateY(-1px)}
-.complete-card>button.sudoku-primary:active{transform:translateY(4px);box-shadow:inset 0 2px 0 rgba(255,255,255,.7),inset 0 -2px 0 rgba(31,140,140,.2),0 1px 0 #62bdb4,0 3px 7px rgba(40,140,140,.22)}
-.complete-card>button:not(.sudoku-primary):active{transform:translateY(3px);box-shadow:inset 0 2px 0 #fff,inset 0 -2px 0 rgba(120,90,175,.12),0 1px 0 #d3c5e8,0 3px 6px rgba(90,60,140,.14)}
+.sudoku-overlay .complete-card>button{position:relative;width:100%;margin-top:14px;font-family:inherit;font-weight:900;font-size:16px;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
+.sudoku-overlay .complete-card>button{--top:#d9fffb;--mid:#b9fbf4;--bot:#93f2e6;--edge:#5fd3c6;--edge-soft:rgba(40,150,140,.26);--ink:#0f5f5a;min-height:50px;border:1px solid rgba(255,255,255,.8);border-radius:25px;color:var(--ink);background:linear-gradient(180deg,var(--top) 0%,var(--mid) 55%,var(--bot) 100%);box-shadow:inset 0 2px 0 rgba(255,255,255,.9),inset 0 -3px 0 rgba(0,0,0,.07),0 5px 0 var(--edge),0 10px 15px var(--edge-soft)}
+.sudoku-overlay .complete-card>button.sudoku-primary{min-height:54px;border-radius:27px}
+.sudoku-overlay .complete-card>button:nth-of-type(2){--top:#eef3ff;--mid:#c9dcff;--bot:#a4c1ff;--edge:#7ea3f0;--edge-soft:rgba(70,110,210,.26);--ink:#27499a}
+.sudoku-overlay .complete-card>button:nth-of-type(3){--top:#faf0ff;--mid:#eec7ff;--bot:#dc9bff;--edge:#c47ce9;--edge-soft:rgba(160,80,210,.26);--ink:#6d2a9a}
+.sudoku-overlay .complete-card>button:hover{filter:brightness(1.03);transform:translateY(-1px)}
+.sudoku-overlay .complete-card>button:active{transform:translateY(4px);box-shadow:inset 0 2px 0 rgba(255,255,255,.8),inset 0 -2px 0 rgba(0,0,0,.06),0 1px 0 var(--edge),0 3px 7px var(--edge-soft)}
